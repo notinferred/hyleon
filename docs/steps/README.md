@@ -16,3 +16,4 @@ One row per finished task, linking to its record. Records are never revised.
 | T-14 | The core defined: one model, five tools, four views, one flagship (documents only) | 2026-10-28 | see git log | [T-14.md](T-14.md) |
 | T-01 | Empty workspace from the code map; layering, no-I/O, licence and ledger guardrails in CI | 2026-10-29 | 3c8cd07 | [T-01.md](T-01.md) |
 | T-16 | CI and delivery research: five reports and proposals for Dan (documents only) | 2026-10-29 | see git log | [T-16.md](T-16.md) |
+| T-17 | CI tiers: staging promotes main, Blacksmith runners, time limits, docs-only skip, daily advisories | 2026-10-29 | 3e67cdb | [T-17.md](T-17.md) |

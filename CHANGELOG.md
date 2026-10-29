@@ -14,3 +14,4 @@
 - T-14: the core defined: one model, five tools, four views, one flagship job ([record](docs/steps/T-14.md)).
 - T-01: the empty Rust workspace from the code map, with layering, no-I/O, licence and ledger guardrails running in CI ([record](docs/steps/T-01.md)).
 - T-16: CI and delivery research, with proposals awaiting Dan ([record](docs/steps/T-16.md)).
+- T-17: CI in tiers: work goes to `staging` and CI promotes `main`; Blacksmith runners, time limits, docs-only skip, daily advisory check ([record](docs/steps/T-17.md)).
