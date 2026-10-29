@@ -5,5 +5,17 @@ edition.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 
+[dependencies]
+dioxus = { workspace = true, features = ["macro", "html", "signals", "hooks", "launch"] }
+serde.workspace = true
+serde_json.workspace = true
+velopack = { workspace = true, optional = true }
+
+# `dx` picks the feature for the platform it builds. With neither, the shared code still compiles
+# and tests without system libraries, which is how the gate checks it.
+[features]
+desktop = ["dioxus/desktop", "dep:velopack"]
+web = ["dioxus/web"]
+
 [lints]
 workspace = true

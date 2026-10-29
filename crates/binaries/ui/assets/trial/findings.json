@@ -1,0 +1,30 @@
+[
+  {
+    "severity": "error",
+    "what": "Drive bus address 12 is used twice.",
+    "where": "Drives of pumps P-101 and P-102",
+    "why": "Pack modbus-drive-bus, rule unique-address: each device on a Modbus line needs its own address.",
+    "fix": "Give the P-102 drive a free address, such as 13."
+  },
+  {
+    "severity": "warning",
+    "what": "The bus isn't terminated at its last drive.",
+    "where": "Drive of pump P-104, the end of the bus",
+    "why": "Pack modbus-drive-bus, rule end-termination: an unterminated RS-485 line reflects signals.",
+    "fix": "Fit the termination at the P-104 drive."
+  },
+  {
+    "severity": "warning",
+    "what": "The motor power isn't confirmed.",
+    "where": "Pump P-101",
+    "why": "The value 7.5 kW came from an agent and is marked inferred.",
+    "fix": "Confirm it from the pump's data sheet."
+  },
+  {
+    "severity": "info",
+    "what": "Two spare terminals remain on strip X1.",
+    "where": "Panel CP-1, strip X1",
+    "why": "Pack site-basics, rule spare-terminals: spares are counted for the installer.",
+    "fix": "Nothing to do."
+  }
+]

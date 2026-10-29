@@ -1,0 +1,36 @@
+{
+  "type": "object",
+  "title": "Pump P-101 and its drive",
+  "properties": {
+    "supply": {
+      "type": "string",
+      "title": "Supply system",
+      "description": "The supply the drive is fed from. Every rating on this pump is checked against it.",
+      "enum": ["480 V, 3-phase, 60 Hz", "400 V, 3-phase, 50 Hz"]
+    },
+    "motor_power": {
+      "type": "number",
+      "title": "Motor power (kW)",
+      "description": "From the pump's data sheet. It sizes the drive, the cable and the protection.",
+      "minimum": 0.37,
+      "maximum": 250
+    },
+    "drive": {
+      "type": "string",
+      "title": "Drive model",
+      "description": "Chosen from the catalog.",
+      "enum": ["Sample Drives SD-200, 7.5 kW", "Sample Drives SD-200, 11 kW", "Sample Drives SD-400, 15 kW"]
+    },
+    "termination": {
+      "type": "boolean",
+      "title": "Bus termination fitted at this drive",
+      "description": "Only the last drive on the bus is terminated."
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notes for the installer",
+      "description": "Anything the site team should know."
+    }
+  },
+  "required": ["supply", "motor_power", "drive"]
+}

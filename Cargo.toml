@@ -19,3 +19,7 @@ unsafe_code = "forbid"
 # Exact pins, each version published at least two weeks before it's added (CLAUDE.md, Dependencies).
 [workspace.dependencies]
 cargo_metadata = "=0.23.1"
+dioxus = { version = "=0.7.10", default-features = false }
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = { version = "=1.0.154", features = ["preserve_order"] }
+velopack = "=1.2.161"

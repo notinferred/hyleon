@@ -1,0 +1,11 @@
+# The trial build (T-02). The bundle identifier is a placeholder; the real one is chosen with the
+# release tier (docs/ROADMAP.md, phase 1).
+[application]
+name = "Hyleon"
+
+[web.app]
+title = "Hyleon"
+
+[bundle]
+identifier = "com.example.hyleon-trial"
+publisher = "Hyleon"
