@@ -48,6 +48,8 @@ Every element records how far it has been checked against reality (D-024):
 
 The record set shows these states, so nobody mistakes a design-only element for a verified one.
 
+Each element also has a work status: `new`, `existing`, `to_remove` or `future`. Changes to existing sites then draw and count correctly (D-034).
+
 ## Values and their sources
 
 Every engineering value is an object with its source:

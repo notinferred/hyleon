@@ -39,6 +39,8 @@ The order of content follows D-021: every industry is supported, starting with t
 - **A default owner profile** that the sheets are drawn to ([formats/owner.md](formats/owner.md)).
 - **The catalog** ([formats/catalog.md](formats/catalog.md)): exact models picked and logged, and device settings for the drive bus.
 - **Printing:** true size, and fit to paper with the real scale and a scale bar ([formats/print.md](formats/print.md)).
+- **Questions from every view:** each pack question tagged by who asks it (designer, installer, operator, maintainer, safety, owner), with the views never asked shown (D-034).
+- **Existing vs new:** every element marked new, existing, to remove or future (D-034).
 - **Building by hand.** Forms and tables for components, connections and answers. No agent needed.
 - **The MCP server:** `status`, `questions`, `ask`, `propose`, `apply`, `check`, `explain`, `render`.
 - **The desktop app:** questions, findings, sheets; confirming, accepting and issuing.
@@ -70,6 +72,7 @@ The order of content follows D-021: every industry is supported, starting with t
 - **On site:** marking elements as checked or differing; markups back into the model.
 - **Swapping parts** with compatibility checks and a list of what changes; custom components; agent-researched catalog entries that a person approves (D-031).
 - **Your company profile** (D-030).
+- **The workspace:** the environment canvas, tools, panels as modules, and workspaces per scope (proposed in [DESIGN.md](DESIGN.md); D-035).
 - **Printing:** tiled printing, half-size sets, and the whole set to PDF, printer or plotter (D-029).
 - **Revisions.** Issued revisions with generated change lists, and navigating from a tag to every sheet that shows it.
 - **Exports and handoff:**
@@ -130,6 +133,8 @@ The order of content follows D-021: every industry is supported, starting with t
 - **Industry overlays,** starting with water and wastewater (Ten States, NFPA 820, alarms, standby power), then food and beverage.
 - **Power-study export:** one-line data to SKM, ETAP and EasyPower.
 - **Parameter sheets and commissioning checklists** from device settings, with firmware versions logged (D-032).
+- **Prices and budgets:** catalog prices with availability and a last-checked date, quantities, and a budget estimate. Real lengths arrive with phase 5 (D-034).
+- **Imports and tag sync:** network inventories and controller or SCADA tag lists in, and tags back out (D-034).
 - **Other packs:** distribution boards, piping spools (materials, supports, cut lists).
 - **On site.** Record work on a tablet: photos, measured values, markups.
 - **Catalogs.** Manufacturer data imported via ETIM (open; its xChange JSON format) or BMEcat (BME's free implementation licence needed).
@@ -186,7 +191,7 @@ The order of content follows D-021: every industry is supported, starting with t
 - open export and source-code escrow
 - DEXPI and AutomationML import and export
 - PDF/A-3u or PDF/A-4f with the model attached
-- real-time collaboration, if the need is measured
+- many people on one project, each in their own scope, finishing their part, with or without AI (D-033); real-time editing if the need is measured
 - a public API: idempotency keys, cursor pagination, versioning, signed webhooks
 
 **Exit checks:**

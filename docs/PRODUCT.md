@@ -143,6 +143,12 @@ Each device's parameters, addresses and firmware follow its catalog schema. They
   Format: [formats/print.md](formats/print.md); D-029.
 - **Your company profile:** logo, details, colours and licensed fonts. The client's own standard comes first (D-030).
 
+## Scopes and collaboration
+
+- **Every module is optional, to fit each person's scope of work.** A designer may never see the budget, and an estimator may never touch wiring.
+- **Enterprise means many people on one project,** each in their own scope, finishing their part until the whole project is done, with or without AI. That's how Hyleon scales and earns from larger users (D-033).
+- **The workspace** is proposed in [DESIGN.md](DESIGN.md).
+
 ## Working by hand, or with an AI agent
 
 Hyleon is a normal design application first. People build and change everything by hand: forms, tables and, from phase 2, the topology view. An agent is optional.

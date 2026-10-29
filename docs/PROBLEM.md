@@ -50,8 +50,9 @@ Proposed. Dan confirms each item before it moves into [PRODUCT.md](PRODUCT.md) a
 - **Questions from every perspective.**
   - A pack asks the designer's technical questions, and also the installer's, the operator's, the maintainer's, safety's, cost's, and those of the owner's own process (for example, the grower's).
   - Hyleon shows which perspectives were never asked.
+  - *Adopted 2026-10-28 (D-034).*
 - **Space and dimensions.** Positions and sizes of bays, rooms, floors and aisles, so that distances, clearances and runs are real. *Adopted 2026-10-28 as roadmap phase 5 (D-021).*
-- **Quantities and budgets** (later): counts of every component and of the missing ones, pipe and cable lengths from real distances, and installation effort, priced from catalogs.
+- **Quantities and budgets** (later): counts of every component and of the missing ones, pipe and cable lengths from real distances, and installation effort, priced from catalogs. *Adopted 2026-10-28 (D-034); each person sees budgets only within their scope (D-033).*
 - **Documents attached to components.** Datasheets, manuals, photos and past drawings that people and agents can open and cite.
 - **Documentation as a by-product.** The professional set is ready when the design is, so installation can start as soon as design ends.
 - **Any scale.** From one skid to a whole site, navigable by system and area.
