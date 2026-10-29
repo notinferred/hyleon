@@ -147,7 +147,6 @@ Each device's parameters, addresses and firmware follow its catalog schema. They
 
 - **Every module is optional, to fit each person's scope of work.** A designer may never see the budget, and an estimator may never touch wiring.
 - **Enterprise means many people on one project,** each in their own scope, finishing their part until the whole project is done, with or without AI. That's how Hyleon scales and earns from larger users (D-033).
-- **The workspace** is proposed in [DESIGN.md](DESIGN.md).
 
 ## Working by hand, or with an AI agent
 

@@ -4,7 +4,7 @@ The ledger of one-way doors: choices a later step could undo.
 
 - A row's decision is never edited; only its status changes. A new row supersedes it and names the one it replaces.
 - Rows stay under 500 characters; a test checks this from T-01.
-- Status is **Dan chose**, **proposed** (awaiting Dan), or **superseded by D-…**.
+- Status is **Dan chose**, **proposed** (awaiting Dan), **superseded by D-…**, or **withdrawn**.
 
 | ID | Date | Decision (and options considered) | Why | Status |
 |---|---|---|---|---|
@@ -42,4 +42,4 @@ The ledger of one-way doors: choices a later step could undo.
 | D-032 | 2026-10-28 | Device settings: each device's parameters, addresses and firmware follow its catalog settings schema, are checked across devices, and export as parameter sheets and commissioning checklists. Option: settings kept in notes. | Configuration errors become commissioning failures; documented settings make installation faster. | Dan chose |
 | D-033 | 2026-10-28 | Scopes: every module is optional per person's scope of work; workspaces per role; enterprise means many people finishing one project together, each in their scope, with or without AI. Option: one view for everyone. | People own different parts of a job; this is how Hyleon scales and earns from larger users. | Dan chose |
 | D-034 | 2026-10-28 | Adopted gaps: questions from every view (installer, operator, maintainer, safety, owner); prices and budgets; existing vs new status; imports and tag sync. Option: leave them in the backlog. | Single-perspective design misses things; budgets, existing sites and typed-twice tags are real costs. | Dan chose |
-| D-035 | 2026-10-28 | The workspace: an Adobe-style environment with the document (the place and its parts) at the centre, shared tools, panels as modules, and saved workspaces per scope. Option: a step-by-step checklist app. | It's a design application for environments, not an AI app; people stay oriented by the document, not by a wizard. | proposed |
+| D-035 | 2026-10-28 | The workspace: an Adobe-style environment with the document (the place and its parts) at the centre, shared tools, panels as modules, and saved workspaces per scope. Option: a step-by-step checklist app. | It's a design application for environments, not an AI app; people stay oriented by the document, not by a wizard. | withdrawn by Dan, 2026-10-28 |

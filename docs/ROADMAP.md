@@ -72,7 +72,6 @@ The order of content follows D-021: every industry is supported, starting with t
 - **On site:** marking elements as checked or differing; markups back into the model.
 - **Swapping parts** with compatibility checks and a list of what changes; custom components; agent-researched catalog entries that a person approves (D-031).
 - **Your company profile** (D-030).
-- **The workspace:** the environment canvas, tools, panels as modules, and workspaces per scope (proposed in [DESIGN.md](DESIGN.md); D-035).
 - **Printing:** tiled printing, half-size sets, and the whole set to PDF, printer or plotter (D-029).
 - **Revisions.** Issued revisions with generated change lists, and navigating from a tag to every sheet that shows it.
 - **Exports and handoff:**

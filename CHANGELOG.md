@@ -10,3 +10,4 @@
 - T-10: truths refined (why it matters, works without AI); hosting, sign-in and billing decided ([record](docs/steps/T-10.md)).
 - T-11: the living catalog, device settings, printing at real scale, and company branding ([record](docs/steps/T-11.md)).
 - T-12: scopes and collaboration, the last gaps adopted, and the workspace proposal ([record](docs/steps/T-12.md)).
+- T-13: the workspace proposal withdrawn at Dan's choice ([record](docs/steps/T-13.md)).
