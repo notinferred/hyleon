@@ -117,6 +117,32 @@ Format: [formats/region.md](formats/region.md); decision D-019.
 
 Format: [formats/owner.md](formats/owner.md); decision D-023.
 
+## Components and catalog
+
+- **Exact models,** picked by hand or proposed by an agent.
+  - Every pick is logged.
+  - Each part is marked as existing on site, in stock, or picked to buy.
+- **Swaps** check compatibility and list everything they change.
+- **Missing parts** are added by hand, or researched by an agent from official sources with a source for every fact. A person approves them before use.
+
+Format: [formats/catalog.md](formats/catalog.md); D-031.
+
+## Device settings
+
+Each device's parameters, addresses and firmware follow its catalog schema. They're checked across devices, and exported as parameter sheets and commissioning checklists (D-032).
+
+## Printing and branding
+
+- **Printing:**
+  - true size
+  - fit to paper, with the real scale and a scale bar
+  - tiled across small pages
+  - half-size sets
+  - the whole set at once, to PDF, printer or plotter
+
+  Format: [formats/print.md](formats/print.md); D-029.
+- **Your company profile:** logo, details, colours and licensed fonts. The client's own standard comes first (D-030).
+
 ## Working by hand, or with an AI agent
 
 Hyleon is a normal design application first. People build and change everything by hand: forms, tables and, from phase 2, the topology view. An agent is optional.

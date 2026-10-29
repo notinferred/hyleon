@@ -55,7 +55,7 @@ Open other documents only when the task touches what they own (table below).
 | [docs/PRODUCT.md](docs/PRODUCT.md) | What Hyleon does, in detail: users, the loop, the parts, tiers, hand-offs | Dan ratifies a scope change |
 | [docs/DESIGN.md](docs/DESIGN.md) | Design principles and the rules that follow from them | Rarely, by Dan |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Code map, layering, runtime, trust boundaries, invariants, platform leaks | A structural change to the code |
-| [docs/formats/](docs/formats/) | The project, pack, region-profile, owner-profile and MCP contracts | A format version changes |
+| [docs/formats/](docs/formats/) | The project, pack, region-profile, owner-profile, catalog, print and MCP contracts | A format version changes |
 | [docs/SECURITY.md](docs/SECURITY.md) | Threats (S-) and their mitigations | A threat or mitigation is added or changed |
 | [DECISIONS.md](DECISIONS.md) | One-way doors a later step could undo (D-) | A decision is made or superseded |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Phases 0–7, their scope and exit checks | Dan re-plans |

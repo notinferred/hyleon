@@ -19,6 +19,7 @@
 | `check` | Runs every check and returns the findings |
 | `explain` | For a finding, question, boundary or value: its source, the clause or catalog entry it rests on, and the inputs |
 | `render` | Renders a sheet as SVG and returns it, or writes a PDF into the project's outputs, so the agent can review what a person will see |
+| `propose_component` | Proposes a catalog entry the agent researched, with a source for every fact (official datasheets and manuals first). It stays unverified until a person approves it in the app |
 
 **App-only actions.** These aren't exposed over MCP at all:
 - confirming a value

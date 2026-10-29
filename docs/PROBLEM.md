@@ -46,6 +46,7 @@ Proposed. Dan confirms each item before it moves into [PRODUCT.md](PRODUCT.md) a
 - **Real components, including custom ones.**
   - Anyone can extend the component library: define a component's ports, properties, ratings, symbol and documents once, and use it anywhere.
   - If it exists on site, it can exist in the model.
+  - *Adopted 2026-10-28 (D-031): the catalog records what's on site, in stock and picked, and agents research missing parts from official sources for a person to approve.*
 - **Questions from every perspective.**
   - A pack asks the designer's technical questions, and also the installer's, the operator's, the maintainer's, safety's, cost's, and those of the owner's own process (for example, the grower's).
   - Hyleon shows which perspectives were never asked.

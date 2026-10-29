@@ -12,7 +12,7 @@ crates/
   core (no I/O; builds for wasm32-unknown-unknown)
     units      typed quantities (uom) inside the math; explicit-unit values at every boundary; conductor-size tables
     model      entities, IDs, tags, ports, links, sources, commands; JSON Schema (schemars)
-    catalog    device templates: ports, ratings, losses, dimensions (data)
+    catalog    parts: ports, ratings, dimensions, settings schemas, compatibility, sources (data)
     calc       engineering calculations and their tables (electrical, piping, network/bus)
     packs      pack, region-profile and owner-profile loading and validation, pack layers, question state, CEL conditions and rules (the `cel` crate, with Hyleon's own bounds)
     checks     runs rules, calculations and cross-references; produces findings

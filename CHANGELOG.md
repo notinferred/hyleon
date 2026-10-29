@@ -8,3 +8,4 @@
 - T-08: Dan's blind-spot decisions written into the product, formats and roadmap ([record](docs/steps/T-08.md)).
 - T-09: ready for the first line of code ([record](docs/steps/T-09.md)).
 - T-10: truths refined (why it matters, works without AI); hosting, sign-in and billing decided ([record](docs/steps/T-10.md)).
+- T-11: the living catalog, device settings, printing at real scale, and company branding ([record](docs/steps/T-11.md)).

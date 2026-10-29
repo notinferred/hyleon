@@ -37,6 +37,8 @@ The order of content follows D-021: every industry is supported, starting with t
   - a verification status on every element (D-024)
 - **Region profiles.** The format ([formats/region.md](formats/region.md)), plus two profiles: US (NEC 2023) and international (IEC).
 - **A default owner profile** that the sheets are drawn to ([formats/owner.md](formats/owner.md)).
+- **The catalog** ([formats/catalog.md](formats/catalog.md)): exact models picked and logged, and device settings for the drive bus.
+- **Printing:** true size, and fit to paper with the real scale and a scale bar ([formats/print.md](formats/print.md)).
 - **Building by hand.** Forms and tables for components, connections and answers. No agent needed.
 - **The MCP server:** `status`, `questions`, `ask`, `propose`, `apply`, `check`, `explain`, `render`.
 - **The desktop app:** questions, findings, sheets; confirming, accepting and issuing.
@@ -66,6 +68,9 @@ The order of content follows D-021: every industry is supported, starting with t
   - reviewers' action codes and comments
   - resubmittals
 - **On site:** marking elements as checked or differing; markups back into the model.
+- **Swapping parts** with compatibility checks and a list of what changes; custom components; agent-researched catalog entries that a person approves (D-031).
+- **Your company profile** (D-030).
+- **Printing:** tiled printing, half-size sets, and the whole set to PDF, printer or plotter (D-029).
 - **Revisions.** Issued revisions with generated change lists, and navigating from a tag to every sheet that shows it.
 - **Exports and handoff:**
   - DXF with mapped layers
@@ -96,6 +101,7 @@ The order of content follows D-021: every industry is supported, starting with t
 - **DWG,** through an Open Design Alliance library (D-020). "DWG" names only the file format, never a product
 - space reserved for the licensee's own seal or electronic signature
 - pack defect notices to every affected project (D-025)
+- a shared catalog: approved entries published for everyone (D-031)
 - an offline licence for the desktop app
 - the Astro site: landing, pricing, docs, and a page per pack
 - terms of service and an end-user licence, drafted by counsel for each market. The industry pattern: Hyleon is a tool, not a professional service; the user verifies results; liability is capped. Some countries' laws limit what can be excluded. Counsel also checks EU product liability for software (from 2026-12-09), and E&O and product insurance.
@@ -123,6 +129,7 @@ The order of content follows D-021: every industry is supported, starting with t
 - **The unlisted-panel package:** SCCR, nameplate, and a package ready for a field evaluation body.
 - **Industry overlays,** starting with water and wastewater (Ten States, NFPA 820, alarms, standby power), then food and beverage.
 - **Power-study export:** one-line data to SKM, ETAP and EasyPower.
+- **Parameter sheets and commissioning checklists** from device settings, with firmware versions logged (D-032).
 - **Other packs:** distribution boards, piping spools (materials, supports, cut lists).
 - **On site.** Record work on a tablet: photos, measured values, markups.
 - **Catalogs.** Manufacturer data imported via ETIM (open; its xChange JSON format) or BMEcat (BME's free implementation licence needed).

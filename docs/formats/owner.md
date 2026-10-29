@@ -64,3 +64,13 @@ resubmittal = "{item}.{n}"
 required = true
 method = "pdf-signature"
 ```
+
+## Company profile (your branding)
+
+The company profile is separate from owner profiles. It holds the author's own identity:
+- logo, company name, address and licence numbers
+- colours
+- fonts, as files the company supplies, licensed for embedding
+- cover-sheet and document templates
+
+On any sheet, the owner profile comes first, then the company profile, then Hyleon's default (D-030).
