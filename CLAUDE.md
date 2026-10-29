@@ -30,7 +30,7 @@ Open other documents only when the task touches what they own (table below).
 - **No invented boundaries.** Don't add rules, limits or checks Dan never set. Propose them instead. The product treats its users the same way (TRUTHS.md, truth 5).
 - **Root causes.** When something breaks, diagnose it first, then fix the cause, not the symptom.
 - **TRUTHS.md changes only with Dan's approval of the exact wording.** A conflict with it goes to Dan as a question.
-- **Record Dan's words.** Everything Dan types about the product goes verbatim into [docs/brief/](docs/brief/), in a new dated file. A brief file is never edited.
+- **Record Dan's decisions, not the chat.** Only what Dan types that sets or changes the product, or a later decision, goes verbatim into [docs/brief/](docs/brief/), in a new dated file. Questions, chat and repo housekeeping aren't recorded. A brief file is never edited.
 - **Zero waste on Dan's Mac.** macOS builds, development runs and tests may run locally, but only when necessary, with the smallest command that answers the question, and never in the background or on repeat. CI runs everything else. Linux isn't a priority, but code stays portable to it.
 - **Commits.** There are no pull requests. Agents commit and push to `main` once the work is verified, authored as Dan. No commit message credits an AI.
 - **No employer or client material:** no names, drawings, documents or data from Dan's employer or its clients. Examples use the made-up sample project.
@@ -50,7 +50,7 @@ Open other documents only when the task touches what they own (table below).
 |---|---|---|
 | [TRUTHS.md](TRUTHS.md) | The problem; the product in one sentence and one paragraph; what stays true; what it isn't; the decision test | Only by Dan, approving the exact wording |
 | [docs/PROBLEM.md](docs/PROBLEM.md) | The problem in depth: what's wrong, the real cases, what it asks of Hyleon | Dan confirms each change |
-| [docs/brief/](docs/brief/) | Dan's words, verbatim and dated | Never edited; new words go in a new file |
+| [docs/brief/](docs/brief/) | Dan's words that shape the product or a decision, verbatim and dated | Never edited; new words go in a new file |
 | CLAUDE.md, [AGENTS.md](AGENTS.md) | How to work here | The working method changes |
 | [docs/PRODUCT.md](docs/PRODUCT.md) | What Hyleon does, in detail: users, the loop, the parts, tiers, hand-offs | Dan ratifies a scope change |
 | [docs/DESIGN.md](docs/DESIGN.md) | Design principles and the rules that follow from them | Rarely, by Dan |
