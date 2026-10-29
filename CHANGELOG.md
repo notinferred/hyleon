@@ -12,3 +12,4 @@
 - T-12: scopes and collaboration, the last gaps adopted, and the workspace proposal ([record](docs/steps/T-12.md)).
 - T-13: the workspace proposal withdrawn at Dan's choice ([record](docs/steps/T-13.md)).
 - T-14: the core defined: one model, five tools, four views, one flagship job ([record](docs/steps/T-14.md)).
+- T-15: repository made private, with a description, topics and a proprietary LICENSE ([brief](docs/brief/2026-10-28-16.md)).
