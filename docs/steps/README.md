@@ -13,3 +13,4 @@ One row per finished task, linking to its record. Records are never revised.
 | T-11 | Catalog, device settings, printing and branding (documents only) | 2026-10-28 | see git log | [T-11.md](T-11.md) |
 | T-12 | Scopes and collaboration, the last gaps, and the workspace proposal (documents only) | 2026-10-28 | see git log | [T-12.md](T-12.md) |
 | T-13 | Workspace proposal withdrawn; next, define what's really needed (documents only) | 2026-10-28 | see git log | [T-13.md](T-13.md) |
+| T-14 | The core defined: one model, five tools, four views, one flagship (documents only) | 2026-10-28 | see git log | [T-14.md](T-14.md) |

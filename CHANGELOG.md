@@ -11,3 +11,4 @@
 - T-11: the living catalog, device settings, printing at real scale, and company branding ([record](docs/steps/T-11.md)).
 - T-12: scopes and collaboration, the last gaps adopted, and the workspace proposal ([record](docs/steps/T-12.md)).
 - T-13: the workspace proposal withdrawn at Dan's choice ([record](docs/steps/T-13.md)).
+- T-14: the core defined: one model, five tools, four views, one flagship job ([record](docs/steps/T-14.md)).

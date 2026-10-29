@@ -2,6 +2,27 @@
 
 What Hyleon does, in detail. Why it exists and what must stay true are in [TRUTHS.md](../TRUTHS.md); this document doesn't repeat them. Dan ratifies scope changes. Items marked *proposed* await his decision.
 
+## What Hyleon is made of
+
+This is everything Hyleon really needs (D-036). Everything else attaches to it.
+
+1. **One model.** Everything is one of four things:
+   - a **Place** (site, area, room, enclosure)
+   - a **Part** (a real component from the catalog, or a custom one)
+   - a **Port** (where things attach: power, signal, data, pipe)
+   - a **Connection** (a cable, wire, pipe or network link between ports)
+
+   Every value records its source.
+2. **Five tools,** the same in any environment: **Place**, **Connect**, **Configure** (settings and values), **Measure** (distances and clearances), **Mark up** (notes and site changes).
+3. **Four views** of the same model:
+   - **Layout:** where things are
+   - **Diagram:** how they connect
+   - **Sheets:** drawings to print and issue
+   - **Lists:** parts, I/O, cables, budget
+4. **One flagship job:** a pump station, meaning a VFD pump panel with its drive bus and discharge piping, checked, drawn, printed and recorded end to end. Everything else grows from it.
+
+Environments differ only in data: the catalog's parts, the packs, and the region and owner profiles. A new environment needs new data, not new tools.
+
 ## Who uses it
 
 **Authors** are the people who design and document the work:
