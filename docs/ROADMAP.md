@@ -45,6 +45,7 @@ The order of content follows D-021: every industry is supported, starting with t
 - **The MCP server:** `status`, `questions`, `ask`, `propose`, `apply`, `check`, `explain`, `render`.
 - **The desktop app:** questions, findings, sheets; confirming, accepting and issuing.
 - **Outputs:** one-line diagram, bus wiring sheet, spool sheet, BOM (XLSX and CSV), register list.
+- **Releases** (D-037): signed macOS and Windows builds, Velopack updates with rollback support from the first version, and an evidence bundle for each release.
 
 **Exit checks:**
 - From a written brief, Claude Code designs the sample through MCP. Every required question is answered by a person, through elicitation or in the app. Revision A is issued with zero errors.
@@ -107,6 +108,7 @@ The order of content follows D-021: every industry is supported, starting with t
 - an offline licence for the desktop app
 - the Astro site: landing, pricing, docs, and a page per pack
 - terms of service and an end-user licence, drafted by counsel for each market. The industry pattern: Hyleon is a tool, not a professional service; the user verifies results; liability is capped. Some countries' laws limit what can be excluded. Counsel also checks EU product liability for software (from 2026-12-09), and E&O and product insurance.
+- the deploy tier (D-037): the web app and website on Cloudflare, the API on one host
 - the API: Axum, tower, sqlx and Postgres (D-026). Its dormant invariants switch on: resilience, admission control, health, secrets ([ARCHITECTURE.md](ARCHITECTURE.md))
 
 **Exit checks:**

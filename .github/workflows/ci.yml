@@ -1,7 +1,11 @@
 name: CI
 
+# Work is pushed to `staging`. When the checks pass, CI fast-forwards `main` to the tested commit,
+# so main only ever holds checked work (D-038). A direct push to `main` is checked too, but nothing
+# promotes it. The tiers and their triggers are in docs/ARCHITECTURE.md (CI and delivery, D-037).
 on:
   push:
+    branches: [staging, main]
   workflow_dispatch:
 
 permissions:
@@ -14,12 +18,46 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
 
-# One Linux job keeps CI minutes low. Every check runs even when an earlier one fails, so a
-# single run reports everything. Actions are pinned by commit SHA, each release at least two
-# weeks old when adopted (docs/SECURITY.md, S-08).
 jobs:
+  # Decides whether the Rust checks must run. On `staging` they're skipped only when every file
+  # changed since `main` is documentation that no check reads; anything else runs them.
+  changes:
+    runs-on: ubuntu-slim
+    timeout-minutes: 2
+    outputs:
+      rust: ${{ steps.diff.outputs.rust }}
+    steps:
+      - id: diff
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/staging" ]; then
+            echo "rust=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          compare=$(gh api "repos/$GITHUB_REPOSITORY/compare/main...$GITHUB_SHA") || { echo "rust=true" >> "$GITHUB_OUTPUT"; exit 0; }
+          status=$(jq -r .status <<< "$compare")
+          count=$(jq '.files | length' <<< "$compare")
+          rust=false
+          if [ "$status" != "ahead" ] && [ "$status" != "identical" ] || [ "$count" -ge 300 ]; then
+            rust=true
+          fi
+          while IFS= read -r file; do
+            case "$file" in
+              "" | docs/* | README.md | CHANGELOG.md | TRUTHS.md | CLAUDE.md | AGENTS.md | LICENSE) ;;
+              *) rust=true ;;
+            esac
+          done < <(jq -r '.files[].filename' <<< "$compare")
+          echo "status=$status files=$count rust=$rust"
+          echo "rust=$rust" >> "$GITHUB_OUTPUT"
+
+  # One Linux job keeps minutes low: every check runs even when an earlier one fails, so a single
+  # run reports everything. Actions are pinned by commit SHA, each release at least two weeks old
+  # when adopted (docs/SECURITY.md, S-08).
   check:
-    runs-on: ubuntu-24.04
+    needs: changes
+    if: ${{ needs.changes.outputs.rust == 'true' }}
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -62,3 +100,22 @@ jobs:
             | jq -r '.packages[] | select(.manifest_path | contains("/crates/core/")) | "-p " + .name')
           test -n "$packages"
           cargo build --locked --target wasm32-unknown-unknown $packages
+
+  # Moves `main` to the commit just checked. A fast-forward only: if `main` has moved elsewhere the
+  # update is refused. It runs on GitHub's own runner, so the write token never reaches a vendor's
+  # machine, and a ref update made with this token starts no new run.
+  promote:
+    needs: [changes, check]
+    if: >-
+      ${{ !cancelled() && github.ref == 'refs/heads/staging'
+      && needs.changes.result == 'success'
+      && (needs.check.result == 'success' || needs.check.result == 'skipped') }}
+    runs-on: ubuntu-slim
+    timeout-minutes: 2
+    permissions:
+      contents: write
+    steps:
+      - name: Fast-forward main to the tested commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/heads/main" -f sha="$GITHUB_SHA" -F force=false

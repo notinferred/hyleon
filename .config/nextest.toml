@@ -1,0 +1,4 @@
+# A test still running after 30 s is reported as slow, and one still running after 2 minutes is
+# stopped and fails, so a hung test can't hold CI until the job's own time limit (D-037).
+[profile.default]
+slow-timeout = { period = "30s", terminate-after = 4 }

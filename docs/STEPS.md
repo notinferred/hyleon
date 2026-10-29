@@ -3,7 +3,7 @@
 The next five tasks, in detail. Finished tasks move to [steps/README.md](steps/README.md) with their records.
 
 - **Zero waste on Dan's Mac.** macOS builds, development runs and tests run locally only when necessary; CI runs the rest ([CLAUDE.md](../CLAUDE.md)).
-- **The remote** is `github.com/notinferred/hyleon`. Verified work is pushed to `main`, with no pull requests.
+- **The remote** is `github.com/notinferred/hyleon`. Verified work is pushed to `staging`, and CI moves `main` when its checks pass (D-038). No pull requests.
 
 ## Open
 

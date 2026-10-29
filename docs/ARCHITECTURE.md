@@ -66,6 +66,26 @@ samples/     the made-up sample project
 - **Web (phase 3).** Dioxus compiled to wasm32 in the browser, with the API for accounts, sync and sharing.
 - **CLI in CI (later).** `hyleon check` can gate a project in a customer's own CI, the way tests gate code ([BACKLOG.md](BACKLOG.md)).
 
+## CI and delivery
+
+Delivery runs in tiers (D-037). Each tier, and each lever inside one, starts at its phase or at a measured CI time, never before. The research behind it is in [research/2026-10-29-delivery.md](research/2026-10-29-delivery.md).
+
+| Tier | Runs on | What it does | Status |
+|---|---|---|---|
+| Gate | every push to `staging` (and to `main`) | A `changes` job skips the Rust checks when everything changed since `main` is documentation no check reads. One Linux job runs format, clippy, cargo-deny, tests, doc tests and the wasm32 core build. Then `main` is fast-forwarded to the tested commit (D-038) | implemented (T-17) |
+| Scheduled | daily | cargo-deny advisories. Later, the full suite and unsigned Windows and macOS builds, skipped when `main` hasn't changed | advisories implemented (T-17) |
+| Release | a version tag, then a manual promote | Native Windows and macOS builds, signing, Velopack packages, the CLI, and an evidence bundle (SBOM, checksums, versions) kept outside GitHub. The update feed is published last | phase 1 |
+| Deploy | a push to `main` | The web app and website on Cloudflare; the API on one host | phase 3 |
+| Data | each changed pack; twice daily | Pack tests and signatures; the watcher, with a missed-run alarm | phases 1 and 4 |
+
+- **Levers, by measured gate time:**
+  - over about 5 minutes: slow work moves to the scheduled tier
+  - over about 10: only the crates a change affects are tested (nextest `rdeps`), and compiled crates are shared through sccache on R2
+  - over 20–30: bigger runners and partitioned tests
+- **Time limits.** Every job has one, and nextest stops any test still running after 2 minutes.
+- **Runners.** Blacksmith runs the Linux checks (D-039). Jobs that hold a write token run on GitHub's own `ubuntu-slim`, so the token never reaches a vendor's machine.
+- **Spending.** GitHub has no payment method, so its usage stops at the plan's included $12 a month (D-039).
+
 ## Trust boundaries
 
 Everything crossing inward is hostile until parsed. It is parsed once, at the edge, into typed values.

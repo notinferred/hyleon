@@ -32,10 +32,11 @@ Open other documents only when the task touches what they own (table below).
 - **TRUTHS.md changes only with Dan's approval of the exact wording.** A conflict with it goes to Dan as a question.
 - **Record Dan's decisions, not the chat.** Only what Dan types that sets or changes the product, or a later decision, goes verbatim into [docs/brief/](docs/brief/), in a new dated file. Questions, chat and repo housekeeping aren't recorded. A brief file is never edited.
 - **Zero waste on Dan's Mac.** macOS builds, development runs and tests may run locally, but only when necessary, with the smallest command that answers the question, and never in the background or on repeat. CI runs everything else. Linux isn't a priority, but code stays portable to it.
-- **Commits.** There are no pull requests. Agents commit and push to `main` once the work is verified, authored as Dan. No commit message credits an AI.
+- **Commits.** There are no pull requests. Agents commit verified work, authored as Dan, and push it to `staging`; CI fast-forwards `main` when its checks pass (D-038). No commit message credits an AI.
 - **No employer or client material:** no names, drawings, documents or data from Dan's employer or its clients. Examples use the made-up sample project.
 - **Dependencies:**
   - Pin exact versions, each published at least two weeks before it's added.
+  - Exception: a version that fixes a security advisory affecting Hyleon may be adopted at once. The step record names the advisory.
   - Check each one's licence and maintenance before adopting it.
   - Prefer, in order: a platform primitive, then the ecosystem standard, then a niche library; build it ourselves last, and only with a reason.
   - Own the interface and rent the implementation: code depends on our port, and the library sits behind an adapter.
