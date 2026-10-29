@@ -86,7 +86,7 @@ The order of content follows D-021: every industry is supported, starting with t
 **Goal.** People pay for Pro, work across devices, and present to clients.
 
 **Scope:**
-- accounts (D-012) and subscriptions (D-013)
+- accounts (D-027) and subscriptions (D-028)
 - free viewer seats for reviewers, inspectors and clients
 - a per-project pricing test beside per-person seats
 - sync of logs and revisions (R2)
@@ -99,7 +99,7 @@ The order of content follows D-021: every industry is supported, starting with t
 - an offline licence for the desktop app
 - the Astro site: landing, pricing, docs, and a page per pack
 - terms of service and an end-user licence, drafted by counsel for each market. The industry pattern: Hyleon is a tool, not a professional service; the user verifies results; liability is capped. Some countries' laws limit what can be excluded. Counsel also checks EU product liability for software (from 2026-12-09), and E&O and product insurance.
-- the API: Axum, tower, sqlx and Postgres (D-011). Its dormant invariants switch on: resilience, admission control, health, secrets ([ARCHITECTURE.md](ARCHITECTURE.md))
+- the API: Axum, tower, sqlx and Postgres (D-026). Its dormant invariants switch on: resilience, admission control, health, secrets ([ARCHITECTURE.md](ARCHITECTURE.md))
 
 **Exit checks:**
 - A paying user syncs a project between desktop and web.

@@ -10,3 +10,4 @@ Ideas that aren't on the [roadmap](ROADMAP.md) yet. Nothing here is committed to
 - **Procurement.** Turn a BOM into requests for quotes.
 - **Site voice notes**, transcribed into markups. The person confirms them, because the transcript is AI-inferred.
 - **Other languages** for the UI and the generated sheets.
+- **An architecture app (building design).** Out of scope for now. Phase 5 (Space) is the bridge. The truths would hold unchanged; only the examples in the problem would widen (Dan, 2026-10-28).
