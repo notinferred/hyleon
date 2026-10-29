@@ -49,7 +49,7 @@ jobs:
 
       - name: Tests
         if: ${{ !cancelled() && steps.toolchain.outcome == 'success' }}
-        run: cargo nextest run --workspace --locked
+        run: cargo nextest run --workspace --locked --no-fail-fast
 
       - name: Doc tests
         if: ${{ !cancelled() && steps.toolchain.outcome == 'success' }}

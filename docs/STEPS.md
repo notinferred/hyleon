@@ -7,22 +7,6 @@ The next five tasks, in detail. Finished tasks move to [steps/README.md](steps/R
 
 ## Open
 
-- [ ] **T-01: Workspace guardrails and CI**
-  - **Needs:** nothing; the remote exists.
-  - **Build:**
-    - a Cargo workspace with empty crates for the [code map](ARCHITECTURE.md)
-    - workspace lints (`unsafe_code = "forbid"`, clippy)
-    - a pinned toolchain
-    - a cargo-deny configuration: the licence policy from D-016, advisories, and bans (including language-model SDKs)
-    - a layering test that reads `cargo metadata`
-    - a test that keeps [DECISIONS.md](../DECISIONS.md) rows under 500 characters
-    - GitHub Actions: format, clippy, deny, tests, and the wasm32 build of the core crates
-  - **Verify:**
-    - CI passes on a clean clone
-    - a deliberate backwards dependency (`model` → `store`) fails the layering test
-    - a GPL crate added to a core crate fails cargo-deny
-    - a 600-character ledger row fails its test
-    - `std::fs` used in a core crate fails the build or the layering test
 - [ ] **T-02: Dioxus trial**
   - **Needs:** T-01.
   - **Build:** one screen, built for web and macOS (locally when necessary) and Windows (in CI), with the Dioxus CLI's telemetry switched off. Linux comes later, and the code stays portable:

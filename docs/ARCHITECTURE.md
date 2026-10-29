@@ -1,6 +1,6 @@
 # Architecture
 
-The code map and the rules that shape it. **Status: planned.** No code exists yet, so everything here describes the intended structure until a step builds it. Why each choice was made is in [DECISIONS.md](../DECISIONS.md); the file and protocol contracts are in [formats/](formats/).
+The code map and the rules that shape it. **Status:** the crates exist, empty, and the layering rules are enforced in CI (T-01). Everything else here is planned until a step builds it. Why each choice was made is in [DECISIONS.md](../DECISIONS.md); the file and protocol contracts are in [formats/](formats/).
 
 ## Shape
 
@@ -30,6 +30,7 @@ crates/
     cli        the `hyleon` binary: check, render, export, mcp
     ui         the Dioxus app (web, desktop)
     api        later (phase 3): accounts, sync, sharing, billing
+  guardrails   rule tests: layering, homes, ledger rows; nothing depends on it
 site/        Astro + Starlight; a page per pack, generated from the pack files
 packs/       first-party packs (data)
 regions/     region profiles (data), kept current by the watcher (phase 4)
@@ -50,11 +51,12 @@ samples/     the made-up sample project
   - the DWG library: only `dwg`
   - Postgres, Stripe and the auth provider: only `api`
 - **No AI SDKs.** No crate depends on a language model's SDK. Hyleon never calls a model: people bring their own agent (TRUTHS.md, truths 7 and 8).
-- **Enforcement (from T-01):**
-  - a layering test that reads `cargo metadata` and fails on a backwards dependency, a banned dependency outside its home crate, or core I/O
-  - cargo-deny: licences, advisories, banned crates, sources
+- **Enforcement (T-01):**
+  - a layering test (`crates/guardrails`) reads `cargo metadata` and fails on a crate missing from its layer table, a backwards dependency, or a banned dependency outside its home crate
+  - core I/O fails clippy: `crates/core/clippy.toml` disallows the file, network, process and clock APIs in every core crate
+  - cargo-deny (`deny.toml`): licences, advisories, banned crates (including language-model SDKs), sources
   - workspace lints, including `unsafe_code = "forbid"`
-  - a wasm32 build of the core in CI
+  - a wasm32 build of every crate under `crates/core/` in CI
 
 ## Runtime
 

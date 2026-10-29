@@ -2,7 +2,7 @@
 
 A test suite for physical design (working name). Start with [TRUTHS.md](TRUTHS.md).
 
-**Status: pre-code.** This repository holds the product's truths, research, specification and roadmap. There is nothing to install or run yet.
+**Status: foundations.** This repository holds the product's truths, research, specification and roadmap, and an empty Rust workspace whose guardrails run in CI. There is nothing to install or run yet.
 
 | To learn | Read |
 |---|---|
