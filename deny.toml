@@ -1,0 +1,49 @@
+# Supply-chain checks (docs/SECURITY.md, S-08), run in CI with `cargo deny --locked check`.
+
+# Advisories use cargo-deny's defaults: vulnerable, unsound and unmaintained crates fail.
+
+[licenses]
+# D-016. A dependency that needs a licence not listed here goes to Dan; it isn't added silently.
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "MPL-2.0",
+    "EPL-2.0",
+]
+
+[licenses.private]
+# Hyleon's own crates are proprietary and never published (LICENSE).
+ignore = true
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+allow-wildcard-paths = true
+# Hyleon never calls a language model; people bring their own agent (docs/ARCHITECTURE.md, No AI SDKs).
+deny = [
+    { crate = "anthropic", reason = "no language-model SDKs" },
+    { crate = "anthropic-sdk", reason = "no language-model SDKs" },
+    { crate = "async-openai", reason = "no language-model SDKs" },
+    { crate = "clust", reason = "no language-model SDKs" },
+    { crate = "gemini-rs", reason = "no language-model SDKs" },
+    { crate = "genai", reason = "no language-model SDKs" },
+    { crate = "google-generative-ai-rs", reason = "no language-model SDKs" },
+    { crate = "langchain-rust", reason = "no language-model SDKs" },
+    { crate = "llm", reason = "no language-model SDKs" },
+    { crate = "misanthropic", reason = "no language-model SDKs" },
+    { crate = "mistralai-client", reason = "no language-model SDKs" },
+    { crate = "ollama-rs", reason = "no language-model SDKs" },
+    { crate = "openai", reason = "no language-model SDKs" },
+    { crate = "openai-api-rs", reason = "no language-model SDKs" },
+    { crate = "rig-core", reason = "no language-model SDKs" },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

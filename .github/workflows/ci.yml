@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+# One Linux job keeps CI minutes low. Every check runs even when an earlier one fails, so a
+# single run reports everything. Actions are pinned by commit SHA, each release at least two
+# weeks old when adopted (docs/SECURITY.md, S-08).
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install the pinned toolchain
+        id: toolchain
+        run: |
+          rustup toolchain install
+          cargo --version
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+
+      - uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
+        with:
+          tool: cargo-nextest@0.9.148,cargo-deny@0.20.2
+
+      - name: Format
+        if: ${{ !cancelled() && steps.toolchain.outcome == 'success' }}
+        run: cargo fmt --all --check
+
+      - name: Lints
+        if: ${{ !cancelled() && steps.toolchain.outcome == 'success' }}
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      - name: Licences, advisories, bans and sources
+        if: ${{ !cancelled() && steps.toolchain.outcome == 'success' }}
+        run: cargo deny --locked check
+
+      - name: Tests
+        if: ${{ !cancelled() && steps.toolchain.outcome == 'success' }}
+        run: cargo nextest run --workspace --locked
+
+      - name: Doc tests
+        if: ${{ !cancelled() && steps.toolchain.outcome == 'success' }}
+        run: cargo test --workspace --doc --locked
+
+      - name: Core builds for wasm32
+        if: ${{ !cancelled() && steps.toolchain.outcome == 'success' }}
+        run: |
+          packages=$(cargo metadata --no-deps --format-version 1 --locked \
+            | jq -r '.packages[] | select(.manifest_path | contains("/crates/core/")) | "-p " + .name')
+          test -n "$packages"
+          cargo build --locked --target wasm32-unknown-unknown $packages
