@@ -42,6 +42,16 @@ pub async fn invoke<A: Serialize, R: DeserializeOwned>(
     serde_wasm_bindgen::from_value(value).map_err(|e| format!("{command}: {e}"))
 }
 
+/// Sends a line to the app's `--log` file. Desktop webviews have no console to read in CI.
+pub fn log(message: String) {
+    if in_tauri() {
+        spawn_local(async move {
+            let _: Result<(), String> =
+                invoke("ui_log", &serde_json::json!({ "message": message })).await;
+        });
+    }
+}
+
 /// For commands that answer with raw bytes rather than JSON.
 pub async fn invoke_bytes<A: Serialize>(command: &str, args: &A) -> Result<Vec<u8>, String> {
     let value = invoke_js(command, to_js(args)?)

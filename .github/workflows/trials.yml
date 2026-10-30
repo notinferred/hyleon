@@ -193,6 +193,7 @@ jobs:
           exe=$(find "$app/Contents/MacOS" -type f -perm -u+x | head -n 1)
           echo "T_APP=$app" >> "$GITHUB_ENV"
           echo "T_EXE=$exe" >> "$GITHUB_ENV"
+          mkdir -p ../results && ditto -c -k --keepParent "$app" ../results/trial-t-macos.zip
 
       - name: T's signed update, 0.0.1 to 0.0.2
         run: |
@@ -204,19 +205,20 @@ jobs:
           try="$RUNNER_TEMP/try" && mkdir -p "$try" && cp -R "$T_APP" "$try/"
           exe="$try/$(basename "$T_APP")/Contents/MacOS/$(basename "$T_EXE")"
           marker="$RUNNER_TEMP/self-test.txt"
-          "$exe" --self-test "$marker" --update-feed http://127.0.0.1:8765/latest.json &
+          "$exe" --self-test "$marker" --update-feed http://127.0.0.1:8765/latest.json --log "$RUNNER_TEMP/t-update.log" &
           for _ in $(seq 120); do grep -q 'up to date' "$marker" 2>/dev/null && break; sleep 2; done
-          cat "$marker"
+          echo "--- app log"; cat "$RUNNER_TEMP/t-update.log" 2>/dev/null || echo "(none)"
+          echo "--- self-test"; cat "$marker" 2>/dev/null || echo "(none)"
           sed -n 1p "$marker" | grep -Eq '^0\.0\.1 rendered in [0-9]+ ms$'
           sed -n 2p "$marker" | grep -Eq '^0\.0\.2 rendered in [0-9]+ ms$'
           sed -n 3p "$marker" | grep -Eq '^Hyleon 0\.0\.2 is up to date\.$'
           echo "Ran 0.0.1, installed the signed 0.0.2 and relaunched."
-          ditto -c -k --keepParent "$T_APP" results/trial-t-macos.zip
           cp -R "$feed" results/t-feed
 
       # Each run opens a window, plays the script, writes its results and quits. The slowed runs add
       # 50 ms to every check, which must show in the edit times: proof the timing works.
       - name: Bench all three
+        if: ${{ !cancelled() }}
         run: |
           run() {
             "$@" &
@@ -226,13 +228,14 @@ jobs:
           }
           for size in panel building; do
             run "$D_EXE" --size "$size" --bench "$PWD/results/D-macos-$size.json"
-            run "$T_EXE" --size "$size" --core native --bench "$PWD/results/T-native-macos-$size.json"
-            run "$T_EXE" --size "$size" --core wasm --bench "$PWD/results/T-wasm-macos-$size.json"
+            run "$T_EXE" --size "$size" --core native --bench "$PWD/results/T-native-macos-$size.json" --log "$PWD/results/T-native-macos-$size.log"
+            run "$T_EXE" --size "$size" --core wasm --bench "$PWD/results/T-wasm-macos-$size.json" --log "$PWD/results/T-wasm-macos-$size.log"
           done
           run "$D_EXE" --size panel --slow 50 --bench "$PWD/results/D-macos-panel-slow50.json"
           run "$T_EXE" --size panel --core native --slow 50 --bench "$PWD/results/T-native-macos-panel-slow50.json"
           run "$T_EXE" --size panel --core wasm --slow 50 --bench "$PWD/results/T-wasm-macos-panel-slow50.json"
-          for f in results/*.json; do jq -r "$SUMMARY" "$f"; done
+          for f in results/*.json; do jq -r "$SUMMARY" "$f" || echo "unreadable: $f"; done
+          for f in results/*.log; do echo "--- $f"; cat "$f"; done
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !cancelled() }}
         with:
@@ -307,9 +310,11 @@ jobs:
           if (-not $exe) { throw 'The installed app was not found.' }
           "T_EXE=$($exe.FullName)" | Add-Content $env:GITHUB_ENV
           $marker = Join-Path $env:RUNNER_TEMP 'self-test.txt'
-          Start-Process -FilePath $exe.FullName -ArgumentList '--self-test', $marker, '--update-feed', 'http://127.0.0.1:8765/latest.json'
+          $log = Join-Path $env:RUNNER_TEMP 't-update.log'
+          Start-Process -FilePath $exe.FullName -ArgumentList '--self-test', $marker, '--update-feed', 'http://127.0.0.1:8765/latest.json', '--log', $log
           $deadline = (Get-Date).AddMinutes(4)
           while ((Get-Date) -lt $deadline -and -not ((Test-Path $marker) -and (Select-String -Path $marker -Pattern 'up to date' -Quiet))) { Start-Sleep -Seconds 2 }
+          '--- app log'; if (Test-Path $log) { Get-Content $log } else { '(none)' }
           if (-not (Test-Path $marker)) { throw 'The app never wrote its self-test file.' }
           $lines = @(Get-Content $marker)
           $lines
@@ -319,6 +324,7 @@ jobs:
           'Installed 0.0.1, installed the signed 0.0.2 and relaunched.'
 
       - name: Bench all three
+        if: ${{ !cancelled() }}
         run: |
           mkdir -p results
           run() {
@@ -329,10 +335,11 @@ jobs:
           }
           for size in panel building; do
             run "$D_EXE" --size "$size" --bench "$(cygpath -w "$PWD/results/D-windows-$size.json")"
-            run "$T_EXE" --size "$size" --core native --bench "$(cygpath -w "$PWD/results/T-native-windows-$size.json")"
-            run "$T_EXE" --size "$size" --core wasm --bench "$(cygpath -w "$PWD/results/T-wasm-windows-$size.json")"
+            run "$T_EXE" --size "$size" --core native --bench "$(cygpath -w "$PWD/results/T-native-windows-$size.json")" --log "$(cygpath -w "$PWD/results/T-native-windows-$size.log")"
+            run "$T_EXE" --size "$size" --core wasm --bench "$(cygpath -w "$PWD/results/T-wasm-windows-$size.json")" --log "$(cygpath -w "$PWD/results/T-wasm-windows-$size.log")"
           done
-          for f in results/*.json; do jq -r "$SUMMARY" "$f"; done
+          for f in results/*.json; do jq -r "$SUMMARY" "$f" || echo "unreadable: $f"; done
+          for f in results/*.log; do echo "--- $f"; cat "$f"; done
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !cancelled() }}
         with:

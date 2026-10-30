@@ -31,6 +31,8 @@ struct Args {
     slow_ms: u64,
     self_test: Option<PathBuf>,
     update_feed: Option<String>,
+    /// Where to write what happened, for diagnosing runs on machines without a console.
+    log: Option<PathBuf>,
 }
 
 impl Args {
@@ -43,6 +45,7 @@ impl Args {
             slow_ms: 0,
             self_test: None,
             update_feed: None,
+            log: None,
         };
         let mut given = std::env::args().skip(1);
         while let Some(arg) = given.next() {
@@ -60,6 +63,7 @@ impl Args {
                 "--slow" => args.slow_ms = given.next().and_then(|s| s.parse().ok()).unwrap_or(0),
                 "--self-test" => args.self_test = given.next().map(PathBuf::from),
                 "--update-feed" => args.update_feed = given.next(),
+                "--log" => args.log = given.next().map(PathBuf::from),
                 _ => {}
             }
         }
@@ -87,8 +91,22 @@ struct Settings {
     start_epoch_ms: f64,
 }
 
+/// Writes a line to the `--log` file, if one was given.
+fn log(launch: &Launch, line: &str) {
+    if let Some(path) = &launch.args.log {
+        note(path, line);
+    }
+}
+
+/// The UI reports its errors here, since a desktop webview has no console to read.
+#[tauri::command]
+fn ui_log(launch: State<'_, Launch>, message: String) {
+    log(&launch, &format!("ui: {message}"));
+}
+
 #[tauri::command]
 fn settings(launch: State<'_, Launch>) -> Settings {
+    log(&launch, "the UI asked for its settings");
     let args = &launch.args;
     Settings {
         mode: match (&args.bench, args.screen) {
@@ -201,6 +219,7 @@ fn bench_done(app: AppHandle, launch: State<'_, Launch>, results: String) {
 /// The trial screen's first render. With `--self-test`, it notes the time, then updates or exits.
 #[tauri::command]
 async fn rendered(app: AppHandle, launch: State<'_, Launch>) -> Result<(), String> {
+    log(&launch, "the trial screen rendered");
     let Some(marker) = launch.args.self_test.clone() else {
         return Ok(());
     };
@@ -344,6 +363,7 @@ fn main() {
         .setup(|app| {
             let menu = menu_bar(app.handle())?;
             app.set_menu(menu)?;
+            log(&app.state::<Launch>(), "started");
             Ok(())
         })
         .on_menu_event(|app, event| {
@@ -361,6 +381,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
+            ui_log,
             settings,
             core_open,
             core_move,

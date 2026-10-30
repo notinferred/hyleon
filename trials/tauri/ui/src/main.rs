@@ -49,6 +49,7 @@ impl Settings {
 }
 
 fn main() {
+    std::panic::set_hook(Box::new(|info| bridge::log(format!("panic: {info}"))));
     leptos::mount::mount_to_body(App);
 }
 
