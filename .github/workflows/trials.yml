@@ -207,7 +207,8 @@ jobs:
           cp "$(find "$RUNNER_TEMP/0.0.2" -name '*.app.tar.gz' | head -n 1)" "$feed/app.tar.gz"
           sig=$(cat "$(find "$RUNNER_TEMP/0.0.2" -name '*.app.tar.gz.sig' | head -n 1)")
           jq -n --arg s "$sig" '{version: "0.0.2", notes: "trial", pub_date: "2026-10-30T00:00:00Z", platforms: {"darwin-aarch64": {signature: $s, url: "http://127.0.0.1:8765/app.tar.gz"}}}' > "$feed/latest.json"
-          python3 -m http.server 8765 --directory "$feed" > /dev/null 2>&1 &
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory "$feed" > /dev/null 2>&1 &
+          for _ in $(seq 20); do curl -fs -o /dev/null http://127.0.0.1:8765/latest.json && break; sleep 0.5; done
           try="$RUNNER_TEMP/try" && mkdir -p "$try" && cp -R "$T_APP" "$try/"
           exe="$try/$(basename "$T_APP")/Contents/MacOS/$(basename "$T_EXE")"
           marker="$RUNNER_TEMP/self-test.txt"
@@ -309,13 +310,15 @@ jobs:
           Copy-Item $setup2.FullName (Join-Path $feed 'setup.exe')
           $sig = Get-Content -Raw "$($setup2.FullName).sig"
           @{ version = '0.0.2'; notes = 'trial'; pub_date = '2026-10-30T00:00:00Z'; platforms = @{ 'windows-x86_64' = @{ signature = $sig.Trim(); url = 'http://127.0.0.1:8765/setup.exe' } } } | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $feed 'latest.json')
-          Start-Process python -ArgumentList '-m', 'http.server', '8765', '--directory', $feed -WindowStyle Hidden
+          Start-Process python -ArgumentList '-m', 'http.server', '8765', '--bind', '127.0.0.1', '--directory', $feed -WindowStyle Hidden
+          for ($i = 0; $i -lt 20; $i++) { try { Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8765/latest.json | Out-Null; break } catch { Start-Sleep -Milliseconds 500 } }
           $setup1 = Get-ChildItem (Join-Path $env:RUNNER_TEMP '0.0.1') -Filter '*-setup.exe' | Select-Object -First 1
           (Start-Process -FilePath $setup1.FullName -ArgumentList '/S' -PassThru).WaitForExit()
           Start-Sleep -Seconds 3
           Get-Process | Where-Object { $_.Path -like "*Hyleon Trial T*" } | Stop-Process -ErrorAction SilentlyContinue
-          # NSIS installs per user under the product name; the app is the .exe that isn't the uninstaller.
-          $exe = Get-ChildItem (Join-Path $env:LOCALAPPDATA 'Hyleon Trial T') -Filter '*.exe' -ErrorAction SilentlyContinue | Where-Object { $_.Name -notlike 'uninstall*' } | Select-Object -First 1
+          # Where NSIS put it isn't certain, so look where a per-user or per-machine install would go.
+          $exe = Get-ChildItem $env:LOCALAPPDATA, $env:ProgramFiles -Recurse -Depth 3 -Filter 'trial-tauri.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($exe) { "Installed at $($exe.FullName)" }
           if (-not $exe) { throw 'The installed app was not found.' }
           "T_EXE=$($exe.FullName)" | Add-Content $env:GITHUB_ENV
           $marker = Join-Path $env:RUNNER_TEMP 'self-test.txt'
