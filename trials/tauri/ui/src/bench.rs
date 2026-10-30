@@ -222,7 +222,7 @@ impl Model {
     fn reload(self) {
         let reloads = self.reloads.get_value();
         self.reloads.set_value(reloads + 1);
-        let seed = if reloads % 2 == 0 { 2 } else { 1 };
+        let seed = if reloads.is_multiple_of(2) { 2 } else { 1 };
         spawn_local(async move {
             let (scene, findings) = if self.native {
                 expect(bridge::invoke("core_reload", &json!({ "seed": seed })).await)
