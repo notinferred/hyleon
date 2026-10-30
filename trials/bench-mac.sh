@@ -1,16 +1,15 @@
 #!/bin/bash
-# Runs the T-02 comparison on a Mac: every variant at every size, three times, recording peak memory.
-# Usage: bench-mac.sh <D executable> <T executable> <results folder>
+# Runs the T-02 bench on a Mac: the Tauri app with its core native and inside the UI, at both sizes,
+# three times, recording peak memory. Usage: bench-mac.sh <T executable> <results folder>
 #
 # Memory is the app's process plus the WebKit processes that start during its run. WebKit runs pages
 # in separate helper processes, so leave other WebKit apps (Safari, Mail) alone while this runs.
 set -euo pipefail
 
-d_exe=$1
-t_exe=$2
-out=$3
+t_exe=$1
+out=$2
 mkdir -p "$out"
-test -x "$d_exe" && test -x "$t_exe"
+test -x "$t_exe"
 
 webkit() { pgrep -f 'com.apple.WebKit' | sort || true; }
 
@@ -37,7 +36,6 @@ run() {
 
 for i in 1 2 3; do
   for size in panel building; do
-    run "D-mac-$size-$i" "$d_exe" --size "$size" --bench "$out/D-mac-$size-$i.json"
     run "T-native-mac-$size-$i" "$t_exe" --size "$size" --core native --bench "$out/T-native-mac-$size-$i.json"
     run "T-wasm-mac-$size-$i" "$t_exe" --size "$size" --core wasm --bench "$out/T-wasm-mac-$size-$i.json"
   done

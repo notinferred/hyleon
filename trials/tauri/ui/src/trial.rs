@@ -10,10 +10,10 @@ use serde_json::json;
 use crate::bridge;
 use crate::questions::{self, Field, Form, Kind};
 
-const APP_CSS: &str = include_str!("../../../../crates/binaries/ui/assets/trial/app.css");
-const TRIAL_SHEET: &str = include_str!("../../../../crates/binaries/ui/assets/trial/sheet.svg");
+const APP_CSS: &str = include_str!("../../../assets/trial/app.css");
+const TRIAL_SHEET: &str = include_str!("../../../assets/trial/sheet.svg");
 const TRIAL_FINDINGS: &str =
-    include_str!("../../../../crates/binaries/ui/assets/trial/findings.json");
+    include_str!("../../../assets/trial/findings.json");
 const STEP: f64 = 1.25;
 const NUDGE: f64 = 40.0;
 

@@ -1,12 +1,9 @@
 name: Trials
 
-# Started by hand. The T-02 comparison (docs/STEPS.md): each UI stack runs trials/bench.js on the
-# same generated building, and the results are uploaded. Runner numbers are a hint only, since
-# runners are slow virtual machines; the real numbers come from Dan's Mac.
-#   D         Dioxus 0.7, core native in the same process          trials/dioxus
-#   T-native  Leptos 0.8 in Tauri 2, core native behind commands   trials/tauri
-#   T-wasm    the same app, core as wasm inside the UI
-# The Tauri trial is its own workspace: its wry and Dioxus's can't share a lockfile.
+# Started by hand. The Leptos + Tauri trial that D-043 chose (docs/steps/T-02.md): its checks, its
+# signed update on macOS and Windows, and trials/bench.js on the generated building, with the core
+# native (T-native) or inside the UI as wasm (T-wasm). Runner numbers are a hint only, since runners
+# are slow virtual machines; the real numbers came from Dan's Mac. The Dioxus variant was removed.
 on:
   workflow_dispatch:
     inputs:
@@ -25,8 +22,6 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  DX_TELEMETRY_ENABLED: "false"
-  DX_RELEASE: https://github.com/DioxusLabs/dioxus/releases/download/v0.7.10
   TRUNK_RELEASE: https://github.com/trunk-rs/trunk/releases/download/v0.21.14
   TAURI_CLI_RELEASE: https://github.com/tauri-apps/tauri/releases/download/tauri-cli-v2.12.3
   # One line per results file: each scenario's median and 95th percentile, in ms.
@@ -84,7 +79,7 @@ jobs:
       - name: Lints, web builds
         if: ${{ !cancelled() }}
         run: |
-          cargo clippy --locked -p trial-dioxus -p bench-core --target wasm32-unknown-unknown --features trial-dioxus/web -- -D warnings
+          cargo clippy --locked -p bench-core --target wasm32-unknown-unknown -- -D warnings
           (cd tauri && cargo clippy --locked -p trial-leptos --target wasm32-unknown-unknown -- -D warnings)
 
   web:
@@ -102,23 +97,17 @@ jobs:
           workspaces: |
             trials -> target
             trials/tauri -> target
-      - name: Install dx and Trunk
+      - name: Install Trunk
         run: |
-          curl -fsSL -o "$RUNNER_TEMP/dx.tar.gz" "$DX_RELEASE/dx-x86_64-unknown-linux-gnu.tar.gz"
-          echo "4363e4ed2a3f1eb7f4d38d2d59aed59ce43271c44c16b425e92c89a64761fbe7  $RUNNER_TEMP/dx.tar.gz" | sha256sum -c -
           curl -fsSL -o "$RUNNER_TEMP/trunk.tar.gz" "$TRUNK_RELEASE/trunk-x86_64-unknown-linux-gnu.tar.gz"
           echo "f2b4680cd239693a646a2795e4633c625328d7b2a044fbe749fa3a2fe9e7036b  $RUNNER_TEMP/trunk.tar.gz" | sha256sum -c -
           mkdir -p "$RUNNER_TEMP/bin"
-          tar -xzf "$RUNNER_TEMP/dx.tar.gz" -C "$RUNNER_TEMP/bin"
           tar -xzf "$RUNNER_TEMP/trunk.tar.gz" -C "$RUNNER_TEMP/bin"
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
-      - name: Build D and the Leptos UI for the web
-        run: |
-          dx build --package trial-dioxus --platform web --release
-          (cd tauri/ui && trunk build --release)
+      - name: Build the Leptos UI for the web
+        run: (cd tauri/ui && trunk build --release)
       - name: Bench in Chrome
         run: |
-          d_public=$(dirname "$(find target/dx -path '*/web/public/index.html' | head -n 1)")
           chrome=$(command -v google-chrome || command -v chromium)
           mkdir -p results
           bench() {
@@ -133,7 +122,6 @@ jobs:
             jq -r "$SUMMARY" "$out"
           }
           for size in panel building; do
-            bench "$d_public" "results/D-web-$size.json" "size=$size&bench=1"
             bench tauri/ui/dist "results/T-wasm-web-$size.json" "size=$size&bench=1"
           done
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -158,27 +146,16 @@ jobs:
           workspaces: |
             trials -> target
             trials/tauri -> target
-      - name: Install dx, Trunk and the Tauri CLI
+      - name: Install Trunk and the Tauri CLI
         run: |
-          curl -fsSL -o "$RUNNER_TEMP/dx.tar.gz" "$DX_RELEASE/dx-aarch64-apple-darwin.tar.gz"
-          echo "342c92bc33dca60dadd725ed5e249923f049ae2e1e50b7477f4968d56695b425  $RUNNER_TEMP/dx.tar.gz" | shasum -a 256 -c -
           curl -fsSL -o "$RUNNER_TEMP/trunk.tar.gz" "$TRUNK_RELEASE/trunk-aarch64-apple-darwin.tar.gz"
           echo "764e299dd50d89442a4e96a236349f57961984b701e74d3dbdb39cd1c9f5101e  $RUNNER_TEMP/trunk.tar.gz" | shasum -a 256 -c -
           curl -fsSL -o "$RUNNER_TEMP/tauri.zip" "$TAURI_CLI_RELEASE/cargo-tauri-aarch64-apple-darwin.zip"
           echo "35e3b339bfb5f2061023bf5646dc969e5fa53b6fc4347daf467e7f6743692494  $RUNNER_TEMP/tauri.zip" | shasum -a 256 -c -
           mkdir -p "$RUNNER_TEMP/bin"
-          tar -xzf "$RUNNER_TEMP/dx.tar.gz" -C "$RUNNER_TEMP/bin"
           tar -xzf "$RUNNER_TEMP/trunk.tar.gz" -C "$RUNNER_TEMP/bin"
           unzip -q "$RUNNER_TEMP/tauri.zip" -d "$RUNNER_TEMP/bin"
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
-
-      - name: D
-        run: |
-          cargo clippy --locked -p trial-dioxus --features desktop -- -D warnings
-          dx build --package trial-dioxus --platform desktop --release
-          app=$(find target/dx -maxdepth 5 -type d -path '*/release/macos/*.app' | head -n 1)
-          echo "D_EXE=$PWD/$app/Contents/MacOS/trial-dioxus" >> "$GITHUB_ENV"
-          mkdir -p results && ditto -c -k --keepParent "$app" results/trial-d-macos.zip
 
       - name: T, built twice (0.0.1 and 0.0.2) with a throwaway signing key
         working-directory: trials/tauri
@@ -235,11 +212,9 @@ jobs:
             kill "$pid" 2>/dev/null || true
           }
           for size in panel building; do
-            run "$D_EXE" --size "$size" --bench "$PWD/results/D-macos-$size.json"
             run "$T_EXE" --size "$size" --core native --bench "$PWD/results/T-native-macos-$size.json" --log "$PWD/results/T-native-macos-$size.log"
             run "$T_EXE" --size "$size" --core wasm --bench "$PWD/results/T-wasm-macos-$size.json" --log "$PWD/results/T-wasm-macos-$size.log"
           done
-          run "$D_EXE" --size panel --slow 50 --bench "$PWD/results/D-macos-panel-slow50.json"
           run "$T_EXE" --size panel --core native --slow 50 --bench "$PWD/results/T-native-macos-panel-slow50.json"
           run "$T_EXE" --size panel --core wasm --slow 50 --bench "$PWD/results/T-wasm-macos-panel-slow50.json"
           for f in results/*.json; do jq -r "$SUMMARY" "$f" || echo "unreadable: $f"; done
@@ -266,24 +241,15 @@ jobs:
           workspaces: |
             trials -> target
             trials/tauri -> target
-      - name: Install dx, Trunk and the Tauri CLI
+      - name: Install Trunk and the Tauri CLI
         run: |
-          curl -fsSL -o "$RUNNER_TEMP/dx.zip" "$DX_RELEASE/dx-x86_64-pc-windows-msvc.zip"
-          echo "45eb4f87b7f86fdba8508ee7e0ef1f9e13cf8f2ffcc6a2d5858d0e8ea7dd1531  $RUNNER_TEMP/dx.zip" | sha256sum -c -
           curl -fsSL -o "$RUNNER_TEMP/trunk.zip" "$TRUNK_RELEASE/trunk-x86_64-pc-windows-msvc.zip"
           echo "cd6ac15b9daff0365e5695036791ef2ce3c63f61c014f5a8c532363266e4569c  $RUNNER_TEMP/trunk.zip" | sha256sum -c -
           curl -fsSL -o "$RUNNER_TEMP/tauri.zip" "$TAURI_CLI_RELEASE/cargo-tauri-x86_64-pc-windows-msvc.zip"
           echo "563cb2aef280c393688cebaff1a9fd4a2f6df4fdb9be2c665ff3c798a4ffe7c2  $RUNNER_TEMP/tauri.zip" | sha256sum -c -
           mkdir -p "$RUNNER_TEMP/bin"
-          for z in dx trunk tauri; do unzip -q -o "$RUNNER_TEMP/$z.zip" -d "$RUNNER_TEMP/bin"; done
-          dirname "$(find "$RUNNER_TEMP/bin" -name dx.exe -type f)" >> "$GITHUB_PATH"
+          for z in trunk tauri; do unzip -q -o "$RUNNER_TEMP/$z.zip" -d "$RUNNER_TEMP/bin"; done
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
-
-      - name: D
-        run: |
-          cargo clippy --locked -p trial-dioxus --features desktop -- -D warnings
-          dx build --package trial-dioxus --platform desktop --release
-          echo "D_EXE=$PWD/$(find target/dx -path '*/release/windows/app/trial-dioxus.exe' | head -n 1)" >> "$GITHUB_ENV"
 
       - name: T, built twice (0.0.1 and 0.0.2) with a throwaway signing key
         working-directory: trials/tauri
@@ -306,13 +272,14 @@ jobs:
         run: |
           $feed = Join-Path $env:RUNNER_TEMP 'feed'
           New-Item -ItemType Directory -Force $feed | Out-Null
-          $setup2 = Get-ChildItem (Join-Path $env:RUNNER_TEMP '0.0.2') -Filter '*-setup.exe' | Select-Object -First 1
+          # Both builds leave their installers in the bundle folder, so each is picked by its version.
+          $setup2 = Get-ChildItem (Join-Path $env:RUNNER_TEMP '0.0.2') -Filter '*_0.0.2_*-setup.exe' | Select-Object -First 1
           Copy-Item $setup2.FullName (Join-Path $feed 'setup.exe')
           $sig = Get-Content -Raw "$($setup2.FullName).sig"
           @{ version = '0.0.2'; notes = 'trial'; pub_date = '2026-10-30T00:00:00Z'; platforms = @{ 'windows-x86_64' = @{ signature = $sig.Trim(); url = 'http://127.0.0.1:8765/setup.exe' } } } | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $feed 'latest.json')
           Start-Process python -ArgumentList '-m', 'http.server', '8765', '--bind', '127.0.0.1', '--directory', $feed -WindowStyle Hidden
           for ($i = 0; $i -lt 20; $i++) { try { Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8765/latest.json | Out-Null; break } catch { Start-Sleep -Milliseconds 500 } }
-          $setup1 = Get-ChildItem (Join-Path $env:RUNNER_TEMP '0.0.1') -Filter '*-setup.exe' | Select-Object -First 1
+          $setup1 = Get-ChildItem (Join-Path $env:RUNNER_TEMP '0.0.1') -Filter '*_0.0.1_*-setup.exe' | Select-Object -First 1
           (Start-Process -FilePath $setup1.FullName -ArgumentList '/S' -PassThru).WaitForExit()
           Start-Sleep -Seconds 3
           Get-Process | Where-Object { $_.Path -like "*Hyleon Trial T*" } | Stop-Process -ErrorAction SilentlyContinue
@@ -347,7 +314,6 @@ jobs:
             kill "$pid" 2>/dev/null || true
           }
           for size in panel building; do
-            run "$D_EXE" --size "$size" --bench "$(cygpath -w "$PWD/results/D-windows-$size.json")"
             run "$T_EXE" --size "$size" --core native --bench "$(cygpath -w "$PWD/results/T-native-windows-$size.json")" --log "$(cygpath -w "$PWD/results/T-native-windows-$size.log")"
             run "$T_EXE" --size "$size" --core wasm --bench "$(cygpath -w "$PWD/results/T-wasm-windows-$size.json")" --log "$(cygpath -w "$PWD/results/T-wasm-windows-$size.log")"
           done

@@ -1,19 +1,4 @@
-//! Starts the app. `dx` builds it with the `desktop` or `web` feature.
+//! The app: a Leptos UI in a Tauri shell, with the core running inside the UI as wasm (D-043). Built
+//! in a later step; the comparison that chose it is in `trials/` (T-02).
 
-#[cfg(feature = "desktop")]
-fn main() {
-    hyleon_ui::desktop::start();
-    dioxus::LaunchBuilder::desktop()
-        .with_cfg(hyleon_ui::desktop::config())
-        .launch(hyleon_ui::App);
-}
-
-#[cfg(all(feature = "web", not(feature = "desktop")))]
-fn main() {
-    dioxus::launch(hyleon_ui::App);
-}
-
-#[cfg(not(any(feature = "desktop", feature = "web")))]
-fn main() {
-    eprintln!("Build the app with `dx`, which picks the desktop or web feature for the platform.");
-}
+fn main() {}

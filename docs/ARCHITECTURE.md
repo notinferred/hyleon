@@ -5,7 +5,7 @@ The code map and the rules that shape it. **Status:** the crates exist, empty, a
 ## Shape
 
 - A Rust workspace (D-002). The core crates do no I/O, so the same code runs in the desktop app, the browser (wasm32), the CLI and its MCP server, and later the API.
-- The app's UI is Dioxus, for web and desktop, with tablets later (D-003). The website is Astro with Starlight, in `site/`, outside the Cargo workspace.
+- The app's UI is Leptos in a Tauri shell, for desktop now and the web later (D-043). The core runs inside the UI as wasm; the native side handles files, updates and the operating system. The website is Astro with Starlight, in `site/`, outside the Cargo workspace.
 
 ```
 crates/
@@ -28,7 +28,7 @@ crates/
     dwg        DWG writing through the Open Design Alliance library (phase 3; licensed, native only, never in wasm32)
   binaries
     cli        the `hyleon` binary: check, render, export, mcp
-    ui         the Dioxus app (web, desktop)
+    ui         the app: a Leptos UI in a Tauri shell, the core inside it as wasm (D-043); a placeholder until it's built
     api        later (phase 3): accounts, sync, sharing, billing
   guardrails   rule tests: layering, homes, ledger rows; nothing depends on it
 site/        Astro + Starlight; a page per pack, generated from the pack files
@@ -60,10 +60,10 @@ samples/     the made-up sample project
 
 ## Runtime
 
-- **Desktop.** One Dioxus process per open project: UI, core and `store`.
+- **Desktop.** One Tauri app per open project. Its UI runs the core as wasm; its native side holds `store` and reaches the operating system, so only file contents cross between them.
 - **Agent.** The agent's client starts `hyleon mcp` as its own process, which writes to the same project folder. That makes two writers, so writes are optimistic and fenced by sequence number ([formats/project.md](formats/project.md); D-010).
 - **Desktop and agent together.** The app watches the folder and reloads when the sequence advances.
-- **Web (phase 3).** Dioxus compiled to wasm32 in the browser, with the API for accounts, sync and sharing.
+- **Web (phase 3).** The same Leptos UI and core as wasm32 in the browser, with the API for accounts, sync and sharing.
 - **CLI in CI (later).** `hyleon check` can gate a project in a customer's own CI, the way tests gate code ([BACKLOG.md](BACKLOG.md)).
 
 ## CI and delivery
@@ -74,7 +74,7 @@ Delivery runs in tiers (D-037). Each tier, and each lever inside one, starts at 
 |---|---|---|---|
 | Gate | every push to `staging` (and to `main`) | A `changes` job skips the Rust checks when everything changed since `main` is documentation no check reads. One Linux job runs format, clippy, cargo-deny, tests, doc tests and the wasm32 core build. Then `main` is fast-forwarded to the tested commit (D-038) | implemented (T-17) |
 | Scheduled | daily | cargo-deny advisories. Later, the full suite and unsigned Windows and macOS builds, skipped when `main` hasn't changed | advisories implemented (T-17) |
-| Release | a version tag, then a manual promote | Native Windows and macOS builds, signing, Velopack packages, the CLI, and an evidence bundle (SBOM, checksums, versions) kept outside GitHub. The update feed is published last | phase 1 |
+| Release | a version tag, then a manual promote | Native Windows and macOS builds, signing, Tauri's signed update packages, the CLI, and an evidence bundle (SBOM, checksums, versions) kept outside GitHub. The update feed is published last | phase 1 |
 | Deploy | a push to `main` | The web app and website on Cloudflare; the API on one host | phase 3 |
 | Data | each changed pack; twice daily | Pack tests and signatures; the watcher, with a missed-run alarm | phases 1 and 4 |
 
@@ -84,7 +84,8 @@ Delivery runs in tiers (D-037). Each tier, and each lever inside one, starts at 
   - over 20–30: bigger runners and partitioned tests
 - **Time limits.** Every job has one, and nextest stops any test still running after 2 minutes.
 - **Runners.** Blacksmith runs the Linux checks (D-039). Jobs that hold a write token run on GitHub's own `ubuntu-slim`, so the token never reaches a vendor's machine.
-- **Spending.** GitHub has no payment method, so its usage stops at the plan's included $12 a month (D-039).
+- **Spending.** GitHub has no payment method (D-039), and the repository is public, so its standard runners cost nothing (D-042).
+- **Trials.** `trials.yml`, started by hand, builds and measures the Leptos + Tauri trial in `trials/` (T-02). Debugging happens on Dan's Mac, where a rebuild takes seconds; CI is for Windows and for confirming.
 
 ## Trust boundaries
 
@@ -132,12 +133,14 @@ These are Dan's invariants (architecture-invariants and ENGINEERING-CONCEPTS), e
 
 Most of these were found by the stack check in [research/2026-10-28-market.md](research/2026-10-28-market.md).
 
-- **Dioxus is pre-1.0.**
-  - 0.7 gets fixes only. 0.8, now in alpha, renames elements and keys and drops Windows 7.
-  - The UI is the outermost layer, so a migration never touches the core. Exact pins; the T-02 trial comes first.
-  - It has no desktop updater, so updates go through Velopack (D-003).
-  - `dx bundle` builds only for the machine it runs on, so CI needs one runner per operating system.
-  - Its CLI sends telemetry by default; it's switched off in CI and in development.
+- **Leptos is pre-1.0.** 0.8 now, 0.9 at release candidate. The UI is the outermost layer, so a migration never touches the core. Exact pins.
+  - Even a browser-only Leptos app compiles `server_fn` and its wasm-split macros (D-044).
+- **Tauri.** Found in the T-02 trial:
+  - Bundles build only on their own operating system, so CI needs a runner for each.
+  - The security policy's `connect-src` must allow `'self'`: the UI's wasm loads by `fetch`.
+  - Its updater checks every package's signature; with `requireSignedVersion` a signature also fixes the version, so an old signed build can't be pushed as new. The switches for plain HTTP and bad certificates are for trials only.
+  - A long core call from the UI blocks it unless it moves to a worker.
+- **A page has at most 4 GB.** The core in the UI held 50,000 parts in about 2.3 GB (T-02). Beyond about 20,000 parts in one view, draw only what's on screen.
 - **Webviews differ.**
   - Desktop renders through the operating system's webview: WebKit on macOS, WebView2 on Windows, WebKitGTK on Linux.
   - Linux (WebKitGTK, the weakest webview) comes later. The code stays portable, and large sheets are tested there before Linux ships.

@@ -1,17 +1,17 @@
 #!/bin/bash
-# The T-02 capacity test: each stack opens ever larger projects until it breaks.
-# Usage: capacity.sh <D executable> <T executable> <results folder> ["<sizes>"]
+# The T-02 capacity test: the Tauri app, with its core native and inside the UI, opens ever larger
+# projects until it breaks. (The Dioxus variant ran here too until D-043 retired it; see T-02.md.)
+# Usage: capacity.sh <T executable> <results folder> ["<sizes>"]
 #
-# A stack drops out at its first size where it crashes or doesn't open within 30 s, its drag p95 is
+# A variant drops out at its first size where it crashes or doesn't open within 30 s, its drag p95 is
 # over 100 ms (felt as lag), or its edit p95 (every check rerun, findings redrawn) is over 1 s.
 # Memory is the app plus the WebKit processes that start during its run, so leave Safari and Mail
 # alone while this runs. Run it plugged in, with Low Power Mode off: it caps WebKit at 30 frames/s.
 set -uo pipefail
 
-d_exe=$1
-t_exe=$2
-out=$3
-sizes=${4:-"1000 2000 5000 10000 20000 50000"}
+t_exe=$1
+out=$2
+sizes=${3:-"1000 2000 5000 10000 20000 50000"}
 mkdir -p "$out"
 out=$(cd "$out" && pwd)
 
@@ -36,7 +36,6 @@ wrap() {
 PLIST
   echo "$app"
 }
-d_app=$(wrap "$d_exe" trial-d)
 t_app=$(wrap "$t_exe" trial-t)
 
 # run <name> <app> <arguments...>: one run, stopped after 2 minutes; writes <name>.memory.json.
@@ -78,11 +77,10 @@ else: print("ok")
 
 broken=" "
 for parts in $sizes; do
-  for variant in D T-wasm T-native; do
+  for variant in T-wasm T-native; do
     [[ $broken == *" $variant "* ]] && continue
     file="$out/$variant-$parts.json"
     case $variant in
-      D) run "$variant-$parts" "$d_app" --size "$parts" --capacity --bench "$file" ;;
       T-wasm) run "$variant-$parts" "$t_app" --size "$parts" --core wasm --capacity --bench "$file" ;;
       T-native) run "$variant-$parts" "$t_app" --size "$parts" --core native --capacity --bench "$file" ;;
     esac
@@ -90,6 +88,6 @@ for parts in $sizes; do
     echo "$variant at $parts parts: $result"
     [[ $result != ok ]] && broken="$broken$variant "
   done
-  [[ $broken == *" D "*" T-wasm "*" T-native "* || $broken == *" D "*" T-native "*" T-wasm "* ]] && break
+  [[ $broken == *" T-wasm "*" T-native "* || $broken == *" T-native "*" T-wasm "* ]] && break
 done
 echo "done; broke:${broken}"

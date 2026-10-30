@@ -1,12 +1,12 @@
-//! The question model from the Dioxus trial (`crates/binaries/ui/src/questions.rs`), copied with its
-//! tests so both trials ask the same questions. Copied, not shared: a shared crate would be
-//! premature before D-003 is settled.
+//! The question model: a JSON Schema in the flat form MCP elicitation uses (docs/formats/mcp.md),
+//! parsed into a form, and answers checked against it. First written for the Dioxus trial, which
+//! D-043 retired.
 
 use serde::Deserialize;
 use serde_json::{Map, Value};
 
 pub const TRIAL_SCHEMA: &str =
-    include_str!("../../../../crates/binaries/ui/assets/trial/questions.schema.json");
+    include_str!("../../../assets/trial/questions.schema.json");
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Form {

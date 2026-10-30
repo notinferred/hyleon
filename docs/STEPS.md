@@ -7,33 +7,6 @@ The next five tasks, in detail. Finished tasks move to [steps/README.md](steps/R
 
 ## Open
 
-- [ ] **T-02: Dioxus trial**
-  - **Needs:** T-01.
-  - **Build:** one screen, built for web and macOS (locally when necessary) and Windows (in CI), with the Dioxus CLI's telemetry switched off. Linux comes later, and the code stays portable:
-    - a question form generated from a JSON Schema
-    - a findings list
-    - a 5,000-element SVG sheet loaded from a fixed file, with accessible labels
-    - native menus and Cmd/Ctrl shortcuts
-    - a Velopack update from one test build to the next
-  - **Verify:**
-    - the web, macOS and Windows builds all run
-    - every control works by keyboard alone
-    - a screen reader announces the sheet's title and its findings
-    - the Velopack update installs and relaunches
-    - Dan, when he chooses, opens the macOS bundle and confirms the sheet pans and zooms smoothly
-    - the result is recorded: confirm D-003, or switch to the Leptos + Tauri fallback
-  - **Comparison, added by Dan** ([brief](brief/2026-10-29-5.md)):
-    - the same screen and checks on Leptos + Tauri
-    - a performance test of both stacks at the end case, a building with 5,000 parts, 20,000 connections and 100 pages:
-      - drag with wires following
-      - edit, checks and findings
-      - pan and zoom
-      - pages and an overview of every page
-      - reload
-      - long lists
-    - Tauri runs with its core both native and inside the UI
-    - numbers come from Dan's Mac, with CI as a hint
-    - the code lives in `trials/`, outside the workspace
 - [ ] **T-03: Model and project format v1**
   - **Needs:** T-01.
   - **Build:**

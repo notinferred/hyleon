@@ -12,7 +12,7 @@ The order of content follows D-021: every industry is supported, starting with t
 - these documents (T-00, T-06, T-07)
 - **Feedback by email, optional.** Hyleon doesn't depend on interviews (Dan, 2026-10-28). Integrators or panel shops may be emailed for feedback, but nothing waits on it.
 - workspace guardrails and CI (T-01)
-- the Dioxus trial (T-02)
+- the UI trial (T-02)
 - the model and project format (T-03)
 - the pack format and the drive-bus pack (T-04)
 - the sheet pipeline (T-05)
@@ -21,7 +21,7 @@ The order of content follows D-021: every industry is supported, starting with t
 - CI passes on a clean clone: format, lints, licences, layering, tests, and the wasm32 build of the core.
 - `hyleon check samples/pump-station` reports exactly the two seeded drive-bus findings (a duplicate address and a missing termination) and nothing else. Fixing them clears them.
 - One bus wiring sheet renders at A3 and ANSI B and passes veraPDF.
-- The Dioxus trial runs as a web build and as macOS and Windows desktop bundles; Linux follows later. D-003 is confirmed or reversed.
+- The UI trial runs as a web build and as macOS and Windows desktop bundles; Linux follows later. The UI stack is decided (D-043).
 
 ## Phase 1: The framework, as a thin slice
 
@@ -45,7 +45,7 @@ The order of content follows D-021: every industry is supported, starting with t
 - **The MCP server:** `status`, `questions`, `ask`, `propose`, `apply`, `check`, `explain`, `render`.
 - **The desktop app:** questions, findings, sheets; confirming, accepting and issuing.
 - **Outputs:** one-line diagram, bus wiring sheet, spool sheet, BOM (XLSX and CSV), register list.
-- **Releases** (D-037): signed macOS and Windows builds, Velopack updates with rollback support from the first version, and an evidence bundle for each release.
+- **Releases** (D-037): signed macOS and Windows builds, Tauri's signed updates with rollback support from the first version, and an evidence bundle for each release.
 
 **Exit checks:**
 - From a written brief, Claude Code designs the sample through MCP. Every required question is answered by a person, through elicitation or in the app. Revision A is issued with zero errors.
@@ -98,7 +98,7 @@ The order of content follows D-021: every industry is supported, starting with t
 - free viewer seats for reviewers, inspectors and clients
 - a per-project pricing test beside per-person seats
 - sync of logs and revisions (R2)
-- the web app (Dioxus on wasm32)
+- the web app (Leptos on wasm32)
 - share links with comments and markups
 - the submittal package
 - **DWG,** through an Open Design Alliance library (D-020). "DWG" names only the file format, never a product

@@ -101,11 +101,6 @@ jobs:
           test -n "$packages"
           cargo build --locked --target wasm32-unknown-unknown $packages
 
-      # The app's desktop code needs Windows or macOS; app.yml checks it when started by hand.
-      - name: App lints for the web build
-        if: ${{ !cancelled() && steps.toolchain.outcome == 'success' }}
-        run: cargo clippy -p hyleon-ui --target wasm32-unknown-unknown --features web --locked -- -D warnings
-
   # Moves `main` to the commit just checked. A fast-forward only: if `main` has moved elsewhere the
   # update is refused. It runs on GitHub's own runner, so the write token never reaches a vendor's
   # machine, and a ref update made with this token starts no new run.
