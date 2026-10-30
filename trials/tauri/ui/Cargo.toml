@@ -6,7 +6,6 @@ rust-version.workspace = true
 publish.workspace = true
 
 [dependencies]
-bench-core.workspace = true
 js-sys = "=0.3.106"
 leptos = { version = "=0.8.22", features = ["csr"] }
 serde.workspace = true
@@ -14,7 +13,7 @@ serde-wasm-bindgen = "=0.6.5"
 serde_json.workspace = true
 wasm-bindgen = "=0.2.129"
 wasm-bindgen-futures = "=0.4.79"
-web-sys = { version = "=0.3.106", features = ["Element", "HtmlDivElement", "KeyboardEvent", "Location", "MouseEvent", "Performance", "PointerEvent", "SubmitEvent", "WheelEvent", "Window"] }
+web-sys = { version = "=0.3.106", features = ["Element", "HtmlDivElement", "KeyboardEvent", "MouseEvent", "SubmitEvent", "WheelEvent", "Window"] }
 
 [lints]
 workspace = true

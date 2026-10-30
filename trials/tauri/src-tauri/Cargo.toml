@@ -9,8 +9,7 @@ publish.workspace = true
 tauri-build = { version = "=2.7.3", features = [] }
 
 [dependencies]
-bench-core.workspace = true
-serde.workspace = true
+# `tauri::generate_context!` expands to code that names serde_json.
 serde_json.workspace = true
 tauri = { version = "=2.12.4", features = [] }
 tauri-plugin-process = "=2.4.0"

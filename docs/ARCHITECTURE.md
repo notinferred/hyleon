@@ -85,7 +85,7 @@ Delivery runs in tiers (D-037). Each tier, and each lever inside one, starts at 
 - **Time limits.** Every job has one, and nextest stops any test still running after 2 minutes.
 - **Runners.** Blacksmith runs the Linux checks (D-039). Jobs that hold a write token run on GitHub's own `ubuntu-slim`, so the token never reaches a vendor's machine.
 - **Spending.** GitHub has no payment method (D-039), and the repository is public, so its standard runners cost nothing (D-042).
-- **Trials.** `trials.yml`, started by hand, builds and measures the Leptos + Tauri trial in `trials/` (T-02). Debugging happens on Dan's Mac, where a rebuild takes seconds; CI is for Windows and for confirming.
+- **Trials.** `trials.yml`, started by hand, checks the Leptos + Tauri trial in `trials/tauri`, the reference for Hyleon's app, and tests its signed update on macOS and Windows (T-02). Debugging happens on Dan's Mac, where a rebuild takes seconds; CI is for Windows and for confirming.
 
 ## Trust boundaries
 

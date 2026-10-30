@@ -1,9 +1,8 @@
 name: Trials
 
-# Started by hand. The Leptos + Tauri trial that D-043 chose (docs/steps/T-02.md): its checks, its
-# signed update on macOS and Windows, and trials/bench.js on the generated building, with the core
-# native (T-native) or inside the UI as wasm (T-wasm). Runner numbers are a hint only, since runners
-# are slow virtual machines; the real numbers came from Dan's Mac. The Dioxus variant was removed.
+# Started by hand. The Leptos + Tauri trial that D-043 chose (docs/steps/T-02.md), kept as the
+# reference for Hyleon's app: its checks, a render check on the web, and its signed update from
+# 0.0.1 to 0.0.2 on macOS and Windows. The comparison's measuring tools are in git history.
 on:
   workflow_dispatch:
     inputs:
@@ -24,24 +23,11 @@ env:
   CARGO_TERM_COLOR: always
   TRUNK_RELEASE: https://github.com/trunk-rs/trunk/releases/download/v0.21.14
   TAURI_CLI_RELEASE: https://github.com/tauri-apps/tauri/releases/download/tauri-cli-v2.12.3
-  # One line per results file: each scenario's median and 95th percentile, in ms.
-  SUMMARY: >-
-    "\(.variant) \(.size)\(if .slowMs > 0 then " slow=\(.slowMs)" else "" end):
-    open \(.open.ms // "-") |
-    drag \(.drag.latency.p50 // "-")/\(.drag.latency.p95 // "-") dropped \(.drag.frames.dropped // "-") |
-    pan \(.pan.latency.p50 // "-")/\(.pan.latency.p95 // "-") |
-    zoom \(.zoom.latency.p50 // "-")/\(.zoom.latency.p95 // "-") |
-    edit \(.edit.latency.p50 // "-")/\(.edit.latency.p95 // "-") |
-    pages \(.pages.latency.p50 // "-")/\(.pages.latency.p95 // "-") |
-    overview \(.overview.ms // "-") |
-    list \(.list.latency.p50 // "-")/\(.list.latency.p95 // "-") |
-    reload \(.reload.latency.p50 // "-") |
-    errors \(.errors | length)"
 
 defaults:
   run:
     shell: bash
-    working-directory: trials
+    working-directory: trials/tauri
 
 jobs:
   check:
@@ -56,35 +42,56 @@ jobs:
         with:
           # Kept even when a later step fails, so the next run doesn't rebuild everything.
           cache-on-failure: true
-          workspaces: |
-            trials -> target
-            trials/tauri -> target
+          workspaces: trials/tauri -> target
       - uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
         with:
           tool: cargo-deny@0.20.2
       - name: Format
-        run: |
-          cargo fmt --all --check
-          (cd tauri && cargo fmt --all --check)
+        run: cargo fmt --all --check
       - name: Licences, advisories, bans and sources (Hyleon's policy)
         if: ${{ !cancelled() }}
-        run: |
-          cp ../deny.toml deny.toml && cargo deny --locked check
-          cp ../deny.toml tauri/deny.toml && (cd tauri && cargo deny --locked check)
+        run: cp ../../deny.toml deny.toml && cargo deny --locked check
       - name: Tests
         if: ${{ !cancelled() }}
-        run: |
-          cargo test --locked -p bench-core
-          (cd tauri && cargo test --locked -p trial-leptos)
-      - name: Lints, web builds
+        run: cargo test --locked -p trial-leptos
+      - name: Lints, web build
         if: ${{ !cancelled() }}
-        run: |
-          cargo clippy --locked -p bench-core --target wasm32-unknown-unknown -- -D warnings
-          (cd tauri && cargo clippy --locked -p trial-leptos --target wasm32-unknown-unknown -- -D warnings)
+        run: cargo clippy --locked -p trial-leptos --target wasm32-unknown-unknown -- -D warnings
 
   web:
     if: ${{ inputs.platform == 'all' || inputs.platform == 'web' }}
     runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install the pinned toolchain
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          cache-on-failure: true
+          workspaces: trials/tauri -> target
+      - name: Install Trunk
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/trunk.tar.gz" "$TRUNK_RELEASE/trunk-x86_64-unknown-linux-gnu.tar.gz"
+          echo "f2b4680cd239693a646a2795e4633c625328d7b2a044fbe749fa3a2fe9e7036b  $RUNNER_TEMP/trunk.tar.gz" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/bin" && tar -xzf "$RUNNER_TEMP/trunk.tar.gz" -C "$RUNNER_TEMP/bin"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - name: Build the UI for the web
+        run: cd ui && trunk build --release
+      - name: Renders in a browser
+        run: |
+          python3 -m http.server 8080 --bind 127.0.0.1 --directory ui/dist > /dev/null 2>&1 &
+          sleep 1
+          chrome=$(command -v google-chrome || command -v chromium)
+          "$chrome" --headless=new --disable-gpu --virtual-time-budget=20000 --dump-dom http://127.0.0.1:8080/ > page.html
+          for text in "Sheet E-101" "Findings (4)" "Pump P-101 and its drive"; do
+            grep -qF "$text" page.html || { echo "missing: $text"; exit 1; }
+          done
+          echo "the web build rendered"
+
+  macos:
+    if: ${{ inputs.platform == 'all' || inputs.platform == 'macos' }}
+    runs-on: macos-15
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -92,60 +99,8 @@ jobs:
         run: rustup toolchain install
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
-          # Kept even when a later step fails, so the next run doesn't rebuild everything.
           cache-on-failure: true
-          workspaces: |
-            trials -> target
-            trials/tauri -> target
-      - name: Install Trunk
-        run: |
-          curl -fsSL -o "$RUNNER_TEMP/trunk.tar.gz" "$TRUNK_RELEASE/trunk-x86_64-unknown-linux-gnu.tar.gz"
-          echo "f2b4680cd239693a646a2795e4633c625328d7b2a044fbe749fa3a2fe9e7036b  $RUNNER_TEMP/trunk.tar.gz" | sha256sum -c -
-          mkdir -p "$RUNNER_TEMP/bin"
-          tar -xzf "$RUNNER_TEMP/trunk.tar.gz" -C "$RUNNER_TEMP/bin"
-          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
-      - name: Build the Leptos UI for the web
-        run: (cd tauri/ui && trunk build --release)
-      - name: Bench in Chrome
-        run: |
-          chrome=$(command -v google-chrome || command -v chromium)
-          mkdir -p results
-          bench() {
-            local folder=$1 out=$2 query=$3
-            python3 -I bench-web.py "$folder" 8080 "$out" &
-            local server=$!
-            sleep 1
-            "$chrome" --headless=new --window-size=1440,900 --no-first-run --user-data-dir="$(mktemp -d)" "http://127.0.0.1:8080/?$query" > /dev/null 2>&1 &
-            local browser=$!
-            for _ in $(seq 400); do kill -0 "$server" 2>/dev/null || break; sleep 1; done
-            kill "$browser" "$server" 2>/dev/null || true
-            jq -r "$SUMMARY" "$out"
-          }
-          for size in panel building; do
-            bench tauri/ui/dist "results/T-wasm-web-$size.json" "size=$size&bench=1"
-          done
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: ${{ !cancelled() }}
-        with:
-          name: trials-web-results
-          path: trials/results
-          retention-days: 7
-
-  macos:
-    if: ${{ inputs.platform == 'all' || inputs.platform == 'macos' }}
-    runs-on: macos-15
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Install the pinned toolchain
-        run: rustup toolchain install
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-        with:
-          # Kept even when a later step fails, so the next run doesn't rebuild everything.
-          cache-on-failure: true
-          workspaces: |
-            trials -> target
-            trials/tauri -> target
+          workspaces: trials/tauri -> target
       - name: Install Trunk and the Tauri CLI
         run: |
           curl -fsSL -o "$RUNNER_TEMP/trunk.tar.gz" "$TRUNK_RELEASE/trunk-aarch64-apple-darwin.tar.gz"
@@ -157,8 +112,7 @@ jobs:
           unzip -q "$RUNNER_TEMP/tauri.zip" -d "$RUNNER_TEMP/bin"
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
 
-      - name: T, built twice (0.0.1 and 0.0.2) with a throwaway signing key
-        working-directory: trials/tauri
+      - name: Built twice (0.0.1 and 0.0.2) with a throwaway signing key
         run: |
           (cd ui && trunk build --release)
           (cd src-tauri && cargo-tauri icon ../app-icon.png > /dev/null)
@@ -172,13 +126,8 @@ jobs:
             cp -R target/release/bundle/macos/. "$RUNNER_TEMP/$v/"
           done
           ls -la "$RUNNER_TEMP/0.0.1" "$RUNNER_TEMP/0.0.2"
-          app=$(find "$RUNNER_TEMP/0.0.1" -maxdepth 1 -name '*.app' | head -n 1)
-          exe=$(find "$app/Contents/MacOS" -type f -perm -u+x | head -n 1)
-          echo "T_APP=$app" >> "$GITHUB_ENV"
-          echo "T_EXE=$exe" >> "$GITHUB_ENV"
-          mkdir -p ../results && ditto -c -k --keepParent "$app" ../results/trial-t-macos.zip
 
-      - name: T's signed update, 0.0.1 to 0.0.2
+      - name: Signed update, 0.0.1 to 0.0.2
         run: |
           feed="$RUNNER_TEMP/feed" && mkdir -p "$feed"
           cp "$(find "$RUNNER_TEMP/0.0.2" -name '*.app.tar.gz' | head -n 1)" "$feed/app.tar.gz"
@@ -186,8 +135,9 @@ jobs:
           jq -n --arg s "$sig" '{version: "0.0.2", notes: "trial", pub_date: "2026-10-30T00:00:00Z", platforms: {"darwin-aarch64": {signature: $s, url: "http://127.0.0.1:8765/app.tar.gz"}}}' > "$feed/latest.json"
           python3 -m http.server 8765 --bind 127.0.0.1 --directory "$feed" > /dev/null 2>&1 &
           for _ in $(seq 20); do curl -fs -o /dev/null http://127.0.0.1:8765/latest.json && break; sleep 0.5; done
-          try="$RUNNER_TEMP/try" && mkdir -p "$try" && cp -R "$T_APP" "$try/"
-          exe="$try/$(basename "$T_APP")/Contents/MacOS/$(basename "$T_EXE")"
+          app=$(find "$RUNNER_TEMP/0.0.1" -maxdepth 1 -name '*.app' | head -n 1)
+          try="$RUNNER_TEMP/try" && mkdir -p "$try" && cp -R "$app" "$try/"
+          exe=$(find "$try/$(basename "$app")/Contents/MacOS" -type f -perm -u+x | head -n 1)
           marker="$RUNNER_TEMP/self-test.txt"
           "$exe" --self-test "$marker" --update-feed http://127.0.0.1:8765/latest.json --log "$RUNNER_TEMP/t-update.log" &
           for _ in $(seq 120); do grep -q 'up to date' "$marker" 2>/dev/null && break; sleep 2; done
@@ -197,50 +147,19 @@ jobs:
           sed -n 2p "$marker" | grep -Eq '^0\.0\.2 rendered in [0-9]+ ms$'
           sed -n 3p "$marker" | grep -Eq '^Hyleon 0\.0\.2 is up to date\.$'
           echo "Ran 0.0.1, installed the signed 0.0.2 and relaunched."
-          cp -R "$feed" results/t-feed
-
-      # Each run opens a window, plays the script, writes its results and quits. The slowed runs add
-      # 50 ms to every check, which must show in the edit times: proof the timing works.
-      - name: Bench all three
-        if: ${{ !cancelled() }}
-        run: |
-          # A run that hasn't finished in 3 minutes has hung; it's stopped and the next one starts.
-          run() {
-            "$@" &
-            local pid=$!
-            for _ in $(seq 180); do kill -0 "$pid" 2>/dev/null || break; sleep 1; done
-            kill "$pid" 2>/dev/null || true
-          }
-          for size in panel building; do
-            run "$T_EXE" --size "$size" --core native --bench "$PWD/results/T-native-macos-$size.json" --log "$PWD/results/T-native-macos-$size.log"
-            run "$T_EXE" --size "$size" --core wasm --bench "$PWD/results/T-wasm-macos-$size.json" --log "$PWD/results/T-wasm-macos-$size.log"
-          done
-          run "$T_EXE" --size panel --core native --slow 50 --bench "$PWD/results/T-native-macos-panel-slow50.json"
-          run "$T_EXE" --size panel --core wasm --slow 50 --bench "$PWD/results/T-wasm-macos-panel-slow50.json"
-          for f in results/*.json; do jq -r "$SUMMARY" "$f" || echo "unreadable: $f"; done
-          for f in results/*.log; do echo "--- $f"; cat "$f"; done
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: ${{ !cancelled() }}
-        with:
-          name: trials-macos
-          path: trials/results
-          retention-days: 7
 
   windows:
     if: ${{ inputs.platform == 'all' || inputs.platform == 'windows' }}
     runs-on: windows-2025
-    timeout-minutes: 60
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install the pinned toolchain
         run: rustup toolchain install
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
-          # Kept even when a later step fails, so the next run doesn't rebuild everything.
           cache-on-failure: true
-          workspaces: |
-            trials -> target
-            trials/tauri -> target
+          workspaces: trials/tauri -> target
       - name: Install Trunk and the Tauri CLI
         run: |
           curl -fsSL -o "$RUNNER_TEMP/trunk.zip" "$TRUNK_RELEASE/trunk-x86_64-pc-windows-msvc.zip"
@@ -251,8 +170,7 @@ jobs:
           for z in trunk tauri; do unzip -q -o "$RUNNER_TEMP/$z.zip" -d "$RUNNER_TEMP/bin"; done
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
 
-      - name: T, built twice (0.0.1 and 0.0.2) with a throwaway signing key
-        working-directory: trials/tauri
+      - name: Built twice (0.0.1 and 0.0.2) with a throwaway signing key
         run: |
           (cd ui && trunk build --release)
           (cd src-tauri && cargo-tauri icon ../app-icon.png > /dev/null)
@@ -267,7 +185,7 @@ jobs:
           done
           ls -la "$RUNNER_TEMP/0.0.1" "$RUNNER_TEMP/0.0.2"
 
-      - name: T's signed update, 0.0.1 to 0.0.2
+      - name: Signed update, 0.0.1 to 0.0.2
         shell: pwsh
         run: |
           $feed = Join-Path $env:RUNNER_TEMP 'feed'
@@ -285,9 +203,8 @@ jobs:
           Get-Process | Where-Object { $_.Path -like "*Hyleon Trial T*" } | Stop-Process -ErrorAction SilentlyContinue
           # Where NSIS put it isn't certain, so look where a per-user or per-machine install would go.
           $exe = Get-ChildItem $env:LOCALAPPDATA, $env:ProgramFiles -Recurse -Depth 3 -Filter 'trial-tauri.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($exe) { "Installed at $($exe.FullName)" }
           if (-not $exe) { throw 'The installed app was not found.' }
-          "T_EXE=$($exe.FullName)" | Add-Content $env:GITHUB_ENV
+          "Installed at $($exe.FullName)"
           $marker = Join-Path $env:RUNNER_TEMP 'self-test.txt'
           $log = Join-Path $env:RUNNER_TEMP 't-update.log'
           Start-Process -FilePath $exe.FullName -ArgumentList '--self-test', $marker, '--update-feed', 'http://127.0.0.1:8765/latest.json', '--log', $log
@@ -301,27 +218,3 @@ jobs:
           if ($lines.Count -ne 3) { throw "Expected 3 lines, got $($lines.Count)." }
           for ($i = 0; $i -lt 3; $i++) { if ($lines[$i] -notmatch $expected[$i]) { throw "Line $($i + 1) is wrong." } }
           'Installed 0.0.1, installed the signed 0.0.2 and relaunched.'
-
-      - name: Bench all three
-        if: ${{ !cancelled() }}
-        run: |
-          mkdir -p results
-          # A run that hasn't finished in 3 minutes has hung; it's stopped and the next one starts.
-          run() {
-            "$@" &
-            local pid=$!
-            for _ in $(seq 180); do kill -0 "$pid" 2>/dev/null || break; sleep 1; done
-            kill "$pid" 2>/dev/null || true
-          }
-          for size in panel building; do
-            run "$T_EXE" --size "$size" --core native --bench "$(cygpath -w "$PWD/results/T-native-windows-$size.json")" --log "$(cygpath -w "$PWD/results/T-native-windows-$size.log")"
-            run "$T_EXE" --size "$size" --core wasm --bench "$(cygpath -w "$PWD/results/T-wasm-windows-$size.json")" --log "$(cygpath -w "$PWD/results/T-wasm-windows-$size.log")"
-          done
-          for f in results/*.json; do jq -r "$SUMMARY" "$f" || echo "unreadable: $f"; done
-          for f in results/*.log; do echo "--- $f"; cat "$f"; done
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: ${{ !cancelled() }}
-        with:
-          name: trials-windows-results
-          path: trials/results
-          retention-days: 7
