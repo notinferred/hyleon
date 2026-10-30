@@ -12,8 +12,7 @@ use crate::questions::{self, Field, Form, Kind};
 
 const APP_CSS: &str = include_str!("../../../assets/trial/app.css");
 const TRIAL_SHEET: &str = include_str!("../../../assets/trial/sheet.svg");
-const TRIAL_FINDINGS: &str =
-    include_str!("../../../assets/trial/findings.json");
+const TRIAL_FINDINGS: &str = include_str!("../../../assets/trial/findings.json");
 const STEP: f64 = 1.25;
 const NUDGE: f64 = 40.0;
 

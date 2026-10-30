@@ -5,8 +5,7 @@
 use serde::Deserialize;
 use serde_json::{Map, Value};
 
-pub const TRIAL_SCHEMA: &str =
-    include_str!("../../../assets/trial/questions.schema.json");
+pub const TRIAL_SCHEMA: &str = include_str!("../../../assets/trial/questions.schema.json");
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Form {
