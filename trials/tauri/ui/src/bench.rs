@@ -296,6 +296,7 @@ pub fn BenchScreen(settings: Settings) -> impl IntoView {
             "size": size.name(),
             "pages": size.pages(),
             "slowMs": settings.slow_ms,
+            "capacity": settings.capacity,
             "startEpochMs": settings.start_epoch_ms,
         });
         if settings.mode != "bench" {

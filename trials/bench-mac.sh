@@ -1,17 +1,15 @@
 #!/bin/bash
 # Runs the T-02 comparison on a Mac: every variant at every size, three times, recording peak memory.
-# Usage: bench-mac.sh <folder holding the D and T apps> <results folder>
+# Usage: bench-mac.sh <D executable> <T executable> <results folder>
 #
 # Memory is the app's process plus the WebKit processes that start during its run. WebKit runs pages
 # in separate helper processes, so leave other WebKit apps (Safari, Mail) alone while this runs.
 set -euo pipefail
 
-apps=$1
-out=$2
+d_exe=$1
+t_exe=$2
+out=$3
 mkdir -p "$out"
-d_exe=$(find "$apps" -path '*.app/Contents/MacOS/trial-dioxus' | head -n 1)
-t_app=$(find "$apps" -maxdepth 2 -name '*Trial T.app' | head -n 1)
-t_exe=$(find "$t_app/Contents/MacOS" -type f -perm -u+x | head -n 1)
 test -x "$d_exe" && test -x "$t_exe"
 
 webkit() { pgrep -f 'com.apple.WebKit' | sort || true; }

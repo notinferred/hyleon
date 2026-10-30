@@ -23,6 +23,9 @@ const TILE_HEIGHT: f32 = 700.0;
 pub enum Size {
     Panel,
     Building,
+    /// For the capacity test: any number of parts (a multiple of 50), each with 4 connections and
+    /// 50 parts to a page.
+    Parts(u32),
 }
 
 impl Size {
@@ -30,14 +33,18 @@ impl Size {
         match name {
             "panel" => Some(Size::Panel),
             "building" => Some(Size::Building),
-            _ => None,
+            n => n
+                .parse::<u32>()
+                .ok()
+                .map(|n| Size::Parts((n / 50).max(1) * 50)),
         }
     }
 
-    pub fn name(self) -> &'static str {
+    pub fn name(self) -> String {
         match self {
-            Size::Panel => "panel",
-            Size::Building => "building",
+            Size::Panel => "panel".to_string(),
+            Size::Building => "building".to_string(),
+            Size::Parts(n) => n.to_string(),
         }
     }
 
@@ -45,6 +52,7 @@ impl Size {
         match self {
             Size::Panel => 500,
             Size::Building => 5_000,
+            Size::Parts(n) => n as usize,
         }
     }
 
@@ -52,6 +60,7 @@ impl Size {
         match self {
             Size::Panel => 2_000,
             Size::Building => 20_000,
+            Size::Parts(n) => 4 * n as usize,
         }
     }
 
@@ -59,6 +68,7 @@ impl Size {
         match self {
             Size::Panel => 20,
             Size::Building => 100,
+            Size::Parts(n) => n as usize / 50,
         }
     }
 }

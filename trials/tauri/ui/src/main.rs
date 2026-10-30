@@ -21,6 +21,9 @@ pub struct Settings {
     pub size: String,
     /// `native` or `wasm`: where the core runs.
     pub core: String,
+    /// Time only opening, dragging and editing (the capacity test).
+    #[serde(default)]
+    pub capacity: bool,
     pub slow_ms: u64,
     pub start_epoch_ms: Option<f64>,
 }
@@ -42,6 +45,7 @@ impl Settings {
             mode: mode.to_string(),
             size: value("size").unwrap_or("panel").to_string(),
             core: "wasm".to_string(),
+            capacity: value("capacity") == Some("1"),
             slow_ms: value("slow").and_then(|s| s.parse().ok()).unwrap_or(0),
             start_epoch_ms: None,
         }

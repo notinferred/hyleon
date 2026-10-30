@@ -28,6 +28,7 @@ struct Args {
     screen: bool,
     size: Size,
     wasm_core: bool,
+    capacity: bool,
     slow_ms: u64,
     self_test: Option<PathBuf>,
     update_feed: Option<String>,
@@ -42,6 +43,7 @@ impl Args {
             screen: false,
             size: Size::Panel,
             wasm_core: false,
+            capacity: false,
             slow_ms: 0,
             self_test: None,
             update_feed: None,
@@ -60,6 +62,7 @@ impl Args {
                         .unwrap_or(Size::Panel);
                 }
                 "--core" => args.wasm_core = given.next().as_deref() == Some("wasm"),
+                "--capacity" => args.capacity = true,
                 "--slow" => args.slow_ms = given.next().and_then(|s| s.parse().ok()).unwrap_or(0),
                 "--self-test" => args.self_test = given.next().map(PathBuf::from),
                 "--update-feed" => args.update_feed = given.next(),
@@ -85,8 +88,9 @@ struct Core(Mutex<Option<Project>>);
 #[serde(rename_all = "camelCase")]
 struct Settings {
     mode: &'static str,
-    size: &'static str,
+    size: String,
     core: &'static str,
+    capacity: bool,
     slow_ms: u64,
     start_epoch_ms: f64,
 }
@@ -116,6 +120,7 @@ fn settings(launch: State<'_, Launch>) -> Settings {
         },
         size: args.size.name(),
         core: if args.wasm_core { "wasm" } else { "native" },
+        capacity: args.capacity,
         slow_ms: args.slow_ms,
         start_epoch_ms: launch.start_epoch_ms,
     }

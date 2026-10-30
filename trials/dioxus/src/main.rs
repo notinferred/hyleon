@@ -25,6 +25,7 @@ fn main() {
                 settings.out = args.next();
             }
             "--slow" => settings.slow_ms = args.next().and_then(|s| s.parse().ok()).unwrap_or(0),
+            "--capacity" => settings.capacity = true,
             _ => {}
         }
     }

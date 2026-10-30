@@ -18,6 +18,8 @@ const LIST_LIMIT: usize = 500;
 pub struct Settings {
     pub size: Size,
     pub bench: bool,
+    /// Time only opening, dragging and editing (the capacity test).
+    pub capacity: bool,
     pub slow_ms: u64,
     /// Where desktop writes the results; the web build posts them to `/results` instead.
     pub out: Option<String>,
@@ -37,6 +39,7 @@ impl Settings {
         Settings {
             size: value("size").and_then(Size::parse).unwrap_or(Size::Panel),
             bench: value("bench") == Some("1"),
+            capacity: value("capacity") == Some("1"),
             slow_ms: value("slow").and_then(|s| s.parse().ok()).unwrap_or(0),
             out: None,
             start_epoch_ms: None,
@@ -191,6 +194,7 @@ async fn run_bench(settings: Settings, model: Model) {
         "size": settings.size.name(),
         "pages": model.core.peek().pages,
         "slowMs": settings.slow_ms,
+        "capacity": settings.capacity,
         "startEpochMs": settings.start_epoch_ms,
         "post": settings.out.is_none(),
     });

@@ -106,7 +106,8 @@
   const scenarios = {
     // Drag the hub part 3 px a step, 120 steps at 60 Hz, as a pointer would. Steps overlap, so
     // each one waits for its own expected position.
-    async drag() {
+    async drag(config) {
+      const steps = config.capacity ? 60 : 120;
       const part = $("#part-" + HUB);
       const frame = $("#diagram-frame");
       const startX = Number(part.dataset.x);
@@ -114,7 +115,7 @@
       pointer("pointerdown", part, x, y);
       const pending = [];
       const intervals = await frames(async () => {
-        for (let k = 1; k <= 120; k++) {
+        for (let k = 1; k <= steps; k++) {
           x += 3;
           const expected = startX + 3 * k;
           pending.push(step(() => pointer("pointermove", frame, x, y), () => Number(part.dataset.x) >= expected, part).catch(() => NaN));
@@ -165,10 +166,10 @@
     },
 
     // Re-address one part 20 times; every check reruns and the findings update.
-    async edit() {
+    async edit(config) {
       const input = $("#edit-address");
       const latencies = [];
-      for (let k = 0; k < 20; k++) {
+      for (let k = 0; k < (config.capacity ? 5 : 20); k++) {
         const before = rev("#findings");
         latencies.push(await step(() => type(input, String(k % 2 ? 200 : 3)), () => rev("#findings") > before, $("#findings")).catch(() => NaN));
       }
@@ -222,18 +223,20 @@
   };
 
   // Runs every scenario once and returns the results. `config` carries the variant, the size,
-  // the page count, and the process start time in epoch ms (for the open time).
+  // the page count, and the process start time in epoch ms (for the open time). With `capacity`,
+  // only opening, dragging and editing are timed, and opening gets 30 seconds.
   window.hyleonBench = async function (config) {
-    const results = { variant: config.variant, size: config.size, slowMs: config.slowMs || 0, userAgent: navigator.userAgent, errors: [] };
+    const results = { variant: config.variant, size: config.size, slowMs: config.slowMs || 0, capacity: !!config.capacity, userAgent: navigator.userAgent, errors: [] };
     try {
-      await until(() => $("#diagram") && $("#diagram").dataset.ready === "1", null, OPEN_TIMEOUT_MS);
+      await until(() => $("#diagram") && $("#diagram").dataset.ready === "1", null, config.capacity ? 30000 : OPEN_TIMEOUT_MS);
       await afterPaint();
       results.open = { ms: Math.round(Date.now() - config.startEpochMs), pageMs: Math.round(performance.now()) };
     } catch (e) {
       results.errors.push("open: " + e.message);
       return results;
     }
-    for (const name of ["drag", "pan", "zoom", "edit", "pages", "overview", "list", "reload"]) {
+    const names = config.capacity ? ["drag", "edit"] : ["drag", "pan", "zoom", "edit", "pages", "overview", "list", "reload"];
+    for (const name of names) {
       try {
         await sleep(300);
         results[name] = await scenarios[name](config);
