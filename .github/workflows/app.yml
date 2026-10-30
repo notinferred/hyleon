@@ -6,6 +6,12 @@ name: App builds
 # minutes come from the plan's included amount, which stops at its limit (D-039).
 on:
   workflow_dispatch:
+    inputs:
+      platform:
+        description: Which build to run, so a rerun spends only the minutes it needs
+        type: choice
+        options: [all, web, windows, macos]
+        default: all
 
 permissions:
   contents: read
@@ -23,6 +29,7 @@ env:
 
 jobs:
   web:
+    if: ${{ inputs.platform == 'all' || inputs.platform == 'web' }}
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 15
     steps:
@@ -63,6 +70,7 @@ jobs:
           retention-days: 3
 
   windows:
+    if: ${{ inputs.platform == 'all' || inputs.platform == 'windows' }}
     runs-on: windows-2025
     timeout-minutes: 30
     defaults:
@@ -124,6 +132,7 @@ jobs:
           'Installed 0.0.1, updated to 0.0.2 and relaunched.'
 
   macos:
+    if: ${{ inputs.platform == 'all' || inputs.platform == 'macos' }}
     runs-on: macos-15
     timeout-minutes: 20
     steps:
@@ -141,6 +150,8 @@ jobs:
           mkdir -p "$RUNNER_TEMP/dx" && tar -xzf dx.tar.gz -C "$RUNNER_TEMP/dx"
           dirname "$(find "$RUNNER_TEMP/dx" -name dx -type f)" >> "$GITHUB_PATH"
           dotnet tool install -g vpk --version "$VPK_VERSION"
+          # On this image .NET isn't in its default folder, so vpk is told where it is.
+          echo "DOTNET_ROOT=$(dirname "$(realpath "$(command -v dotnet)")")" >> "$GITHUB_ENV"
 
       - name: Desktop lints
         run: cargo clippy -p hyleon-ui --features desktop --locked -- -D warnings
