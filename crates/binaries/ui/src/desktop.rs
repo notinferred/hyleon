@@ -85,11 +85,26 @@ pub fn version() -> &'static str {
     })
 }
 
+/// Dioxus's own page, with the app's name and language, which screen readers announce.
+const INDEX: &str = r#"<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Hyleon</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <div id="main"></div>
+    </body>
+</html>"#;
+
 pub fn config() -> Config {
     let window = WindowBuilder::new()
         .with_title(format!("Hyleon {}", version()))
         .with_inner_size(LogicalSize::new(1280.0, 800.0));
-    Config::new().with_window(window).with_menu(menu_bar())
+    Config::new()
+        .with_window(window)
+        .with_menu(menu_bar())
+        .with_custom_index(INDEX.to_string())
 }
 
 /// The menu bar, laid out the way each operating system expects (DESIGN.md, Familiarity).

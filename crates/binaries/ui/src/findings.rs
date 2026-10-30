@@ -56,7 +56,8 @@ pub fn Findings() -> Element {
     rsx! {
         section { class: "findings", aria_labelledby: "findings-title",
             h2 { id: "findings-title", "Findings ({count})" }
-            ul {
+            // Without bullets, WebKit stops calling this a list, so the role says it again.
+            ul { role: "list",
                 for finding in findings {
                     FindingItem { finding }
                 }
