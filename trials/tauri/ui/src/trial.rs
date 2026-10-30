@@ -213,7 +213,13 @@ fn FieldControl(
                 on:change=move |ev| answer.set(event_target_value(&ev))
             >
                 <option value="">"Choose…"</option>
-                {choices.into_iter().map(|c| view! { <option value=c.clone()>{c}</option> }).collect_view()}
+                {choices
+                    .into_iter()
+                    .map(|c| {
+                        let label = c.clone();
+                        view! { <option value=c>{label}</option> }
+                    })
+                    .collect_view()}
             </select>
         }
         .into_any(),
