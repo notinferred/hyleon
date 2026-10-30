@@ -62,7 +62,9 @@ jobs:
         run: cargo fmt --all --check
       - name: Licences, advisories, bans and sources (Hyleon's policy)
         if: ${{ !cancelled() }}
-        run: cargo deny --locked check --config ../deny.toml
+        run: |
+          cp ../deny.toml deny.toml
+          cargo deny --locked check
       - name: Tests
         if: ${{ !cancelled() }}
         run: cargo test --locked -p bench-core

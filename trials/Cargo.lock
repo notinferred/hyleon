@@ -5230,6 +5230,7 @@ dependencies = [
  "bench-core",
  "dioxus",
  "serde_json",
+ "web-sys",
 ]
 
 [[package]]

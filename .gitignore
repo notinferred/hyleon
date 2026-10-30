@@ -4,3 +4,4 @@ node_modules/
 .env
 /trials/target/
 /trials/tauri/ui/dist/
+/trials/deny.toml
