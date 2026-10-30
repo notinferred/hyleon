@@ -17,3 +17,4 @@ One row per finished task, linking to its record. Records are never revised.
 | T-01 | Empty workspace from the code map; layering, no-I/O, licence and ledger guardrails in CI | 2026-10-29 | 3c8cd07 | [T-01.md](T-01.md) |
 | T-16 | CI and delivery research: five reports and proposals for Dan (documents only) | 2026-10-29 | see git log | [T-16.md](T-16.md) |
 | T-17 | CI tiers: staging promotes main, Blacksmith runners, time limits, docs-only skip, daily advisories | 2026-10-29 | 3e67cdb | [T-17.md](T-17.md) |
+| T-02 | UI trial: Dioxus against Leptos + Tauri, with a capacity test; Leptos + Tauri chosen (D-043) and the Dioxus code removed | 2026-10-30 | see git log | [T-02.md](T-02.md) |

@@ -15,3 +15,4 @@
 - T-01: the empty Rust workspace from the code map, with layering, no-I/O, licence and ledger guardrails running in CI ([record](docs/steps/T-01.md)).
 - T-16: CI and delivery research, with proposals awaiting Dan ([record](docs/steps/T-16.md)).
 - T-17: CI in tiers: work goes to `staging` and CI promotes `main`; Blacksmith runners, time limits, docs-only skip, daily advisory check ([record](docs/steps/T-17.md)).
+- T-02: the UI trial. Dioxus and Leptos + Tauri ran the same screen and checks, then a capacity test; Leptos + Tauri was chosen, with the core inside the UI ([record](docs/steps/T-02.md)).
