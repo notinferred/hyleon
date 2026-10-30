@@ -1,0 +1,199 @@
+name: Trials
+
+# Started by hand. The T-02 comparison (docs/STEPS.md): each UI stack runs trials/bench.js on the
+# same generated building and the results are uploaded. Runner numbers are a hint only: they're
+# slow virtual machines. The real numbers come from Dan's Mac. Windows and macOS use GitHub's
+# runners, whose minutes stop at the plan's included amount (D-039).
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Which jobs to run, so a rerun spends only the minutes it needs
+        type: choice
+        options: [all, check, web, macos, windows]
+        default: all
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trials-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  DX_TELEMETRY_ENABLED: "false"
+  DX_RELEASE: https://github.com/DioxusLabs/dioxus/releases/download/v0.7.10
+  # One line per results file: the median and 95th percentile of each scenario, in ms.
+  SUMMARY: >-
+    "\(.variant) \(.size)\(if .slowMs > 0 then " slow=\(.slowMs)" else "" end):
+    open \(.open.ms // "-") |
+    drag \(.drag.latency.p50 // "-")/\(.drag.latency.p95 // "-") dropped \(.drag.frames.dropped // "-") |
+    pan \(.pan.latency.p50 // "-")/\(.pan.latency.p95 // "-") |
+    zoom \(.zoom.latency.p50 // "-")/\(.zoom.latency.p95 // "-") |
+    edit \(.edit.latency.p50 // "-")/\(.edit.latency.p95 // "-") |
+    pages \(.pages.latency.p50 // "-")/\(.pages.latency.p95 // "-") |
+    overview \(.overview.ms // "-") |
+    list \(.list.latency.p50 // "-")/\(.list.latency.p95 // "-") |
+    reload \(.reload.latency.p50 // "-") |
+    errors \(.errors | length)"
+
+defaults:
+  run:
+    shell: bash
+    working-directory: trials
+
+jobs:
+  check:
+    if: ${{ inputs.platform == 'all' || inputs.platform == 'check' }}
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install the pinned toolchain
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: trials -> target
+      - uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
+        with:
+          tool: cargo-deny@0.20.2
+      - name: Format
+        run: cargo fmt --all --check
+      - name: Licences, advisories, bans and sources (Hyleon's policy)
+        if: ${{ !cancelled() }}
+        run: cargo deny --locked check --config ../deny.toml
+      - name: Tests
+        if: ${{ !cancelled() }}
+        run: cargo test --locked -p bench-core
+      - name: Lints, web build
+        if: ${{ !cancelled() }}
+        run: cargo clippy --locked -p trial-dioxus -p bench-core --target wasm32-unknown-unknown --features trial-dioxus/web -- -D warnings
+
+  web:
+    if: ${{ inputs.platform == 'all' || inputs.platform == 'web' }}
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install the pinned toolchain
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: trials -> target
+      - name: Install dx
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/dx.tar.gz" "$DX_RELEASE/dx-x86_64-unknown-linux-gnu.tar.gz"
+          echo "4363e4ed2a3f1eb7f4d38d2d59aed59ce43271c44c16b425e92c89a64761fbe7  $RUNNER_TEMP/dx.tar.gz" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/dx" && tar -xzf "$RUNNER_TEMP/dx.tar.gz" -C "$RUNNER_TEMP/dx"
+          dirname "$(find "$RUNNER_TEMP/dx" -name dx -type f)" >> "$GITHUB_PATH"
+      - name: Build D for the web
+        run: dx build --package trial-dioxus --platform web --release
+      - name: Bench D in Chrome
+        run: |
+          public=$(dirname "$(find target/dx -path '*/web/public/index.html' | head -n 1)")
+          chrome=$(command -v google-chrome || command -v chromium)
+          mkdir -p results
+          for size in panel building; do
+            python3 -I bench-web.py "$public" 8080 "results/D-web-$size.json" &
+            server=$!
+            sleep 1
+            "$chrome" --headless=new --window-size=1440,900 --no-first-run --user-data-dir="$RUNNER_TEMP/chrome-$size" "http://127.0.0.1:8080/?size=$size&bench=1" > /dev/null 2>&1 &
+            browser=$!
+            for _ in $(seq 400); do kill -0 "$server" 2>/dev/null || break; sleep 1; done
+            kill "$browser" "$server" 2>/dev/null || true
+            jq -r "$SUMMARY" "results/D-web-$size.json"
+          done
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: trials-web-results
+          path: trials/results
+          retention-days: 7
+
+  macos:
+    if: ${{ inputs.platform == 'all' || inputs.platform == 'macos' }}
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install the pinned toolchain
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: trials -> target
+      - name: Install dx
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/dx.tar.gz" "$DX_RELEASE/dx-aarch64-apple-darwin.tar.gz"
+          echo "342c92bc33dca60dadd725ed5e249923f049ae2e1e50b7477f4968d56695b425  $RUNNER_TEMP/dx.tar.gz" | shasum -a 256 -c -
+          mkdir -p "$RUNNER_TEMP/dx" && tar -xzf "$RUNNER_TEMP/dx.tar.gz" -C "$RUNNER_TEMP/dx"
+          dirname "$(find "$RUNNER_TEMP/dx" -name dx -type f)" >> "$GITHUB_PATH"
+      - name: Desktop lints
+        run: cargo clippy --locked -p trial-dioxus --features desktop -- -D warnings
+      - name: Build D
+        run: dx build --package trial-dioxus --platform desktop --release
+      # Each run opens a window, plays the script, writes its results and quits. The slowed run
+      # adds 50 ms to every check, which must show up in the edit times: proof the timing works.
+      - name: Bench D
+        run: |
+          app=$(find target/dx -maxdepth 5 -type d -path '*/release/macos/*.app' | head -n 1)
+          exe="$app/Contents/MacOS/trial-dioxus"
+          mkdir -p results
+          run() {
+            "$exe" "$@" &
+            local pid=$!
+            for _ in $(seq 400); do kill -0 "$pid" 2>/dev/null || break; sleep 1; done
+            kill "$pid" 2>/dev/null || true
+          }
+          run --size panel --bench "$PWD/results/D-macos-panel.json"
+          run --size building --bench "$PWD/results/D-macos-building.json"
+          run --size panel --slow 50 --bench "$PWD/results/D-macos-panel-slow50.json"
+          for f in results/*.json; do jq -r "$SUMMARY" "$f"; done
+          ditto -c -k --keepParent "$app" results/trial-d-macos.zip
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: trials-macos
+          path: trials/results
+          retention-days: 7
+
+  windows:
+    if: ${{ inputs.platform == 'all' || inputs.platform == 'windows' }}
+    runs-on: windows-2025
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install the pinned toolchain
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: trials -> target
+      - name: Install dx
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/dx.zip" "$DX_RELEASE/dx-x86_64-pc-windows-msvc.zip"
+          echo "45eb4f87b7f86fdba8508ee7e0ef1f9e13cf8f2ffcc6a2d5858d0e8ea7dd1531  $RUNNER_TEMP/dx.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/dx.zip" -d "$RUNNER_TEMP/dx"
+          dirname "$(find "$RUNNER_TEMP/dx" -name dx.exe -type f)" >> "$GITHUB_PATH"
+      - name: Desktop lints
+        run: cargo clippy --locked -p trial-dioxus --features desktop -- -D warnings
+      - name: Build D
+        run: dx build --package trial-dioxus --platform desktop --release
+      - name: Bench D
+        run: |
+          exe=$(find target/dx -path '*/release/windows/app/trial-dioxus.exe' | head -n 1)
+          mkdir -p results
+          run() {
+            "$exe" "$@" &
+            local pid=$!
+            for _ in $(seq 400); do kill -0 "$pid" 2>/dev/null || break; sleep 1; done
+            kill "$pid" 2>/dev/null || true
+          }
+          run --size panel --bench "$(cygpath -w "$PWD/results/D-windows-panel.json")"
+          run --size building --bench "$(cygpath -w "$PWD/results/D-windows-building.json")"
+          for f in results/*.json; do jq -r "$SUMMARY" "$f"; done
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: trials-windows-results
+          path: trials/results
+          retention-days: 7

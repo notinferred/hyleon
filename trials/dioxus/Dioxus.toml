@@ -1,0 +1,8 @@
+[application]
+name = "Trial D"
+
+[web.app]
+title = "Trial D"
+
+[bundle]
+identifier = "com.example.hyleon-trial-d"
