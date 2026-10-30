@@ -59,6 +59,8 @@ jobs:
         run: rustup toolchain install
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
+          # Kept even when a later step fails, so the next run doesn't rebuild everything.
+          cache-on-failure: true
           workspaces: |
             trials -> target
             trials/tauri -> target
@@ -95,6 +97,8 @@ jobs:
         run: rustup toolchain install
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
+          # Kept even when a later step fails, so the next run doesn't rebuild everything.
+          cache-on-failure: true
           workspaces: |
             trials -> target
             trials/tauri -> target
@@ -149,6 +153,8 @@ jobs:
         run: rustup toolchain install
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
+          # Kept even when a later step fails, so the next run doesn't rebuild everything.
+          cache-on-failure: true
           workspaces: |
             trials -> target
             trials/tauri -> target
@@ -220,10 +226,11 @@ jobs:
       - name: Bench all three
         if: ${{ !cancelled() }}
         run: |
+          # A run that hasn't finished in 3 minutes has hung; it's stopped and the next one starts.
           run() {
             "$@" &
             local pid=$!
-            for _ in $(seq 400); do kill -0 "$pid" 2>/dev/null || break; sleep 1; done
+            for _ in $(seq 180); do kill -0 "$pid" 2>/dev/null || break; sleep 1; done
             kill "$pid" 2>/dev/null || true
           }
           for size in panel building; do
@@ -253,6 +260,8 @@ jobs:
         run: rustup toolchain install
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
+          # Kept even when a later step fails, so the next run doesn't rebuild everything.
+          cache-on-failure: true
           workspaces: |
             trials -> target
             trials/tauri -> target
@@ -327,10 +336,11 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           mkdir -p results
+          # A run that hasn't finished in 3 minutes has hung; it's stopped and the next one starts.
           run() {
             "$@" &
             local pid=$!
-            for _ in $(seq 400); do kill -0 "$pid" 2>/dev/null || break; sleep 1; done
+            for _ in $(seq 180); do kill -0 "$pid" 2>/dev/null || break; sleep 1; done
             kill "$pid" 2>/dev/null || true
           }
           for size in panel building; do

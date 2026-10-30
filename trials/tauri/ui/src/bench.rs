@@ -55,6 +55,10 @@ struct Model {
     view: RwSignal<View>,
     gesture: StoredValue<Option<Gesture>>,
     reloads: StoredValue<u64>,
+    /// T-native's drag: the newest position the core hasn't been told about yet, and whether a
+    /// call is on its way.
+    unsent_move: StoredValue<Option<(u32, f32, f32)>>,
+    sending: StoredValue<bool>,
 }
 
 fn expect<T>(result: Result<T, String>) -> T {
@@ -84,6 +88,8 @@ impl Model {
             }),
             gesture: StoredValue::new(None),
             reloads: StoredValue::new(0),
+            unsent_move: StoredValue::new(None),
+            sending: StoredValue::new(false),
         }
     }
 
@@ -125,19 +131,29 @@ impl Model {
         self.diagram_rev.update(|r| *r += 1);
     }
 
+    /// The part moves on screen at once. A native core is told afterwards, in order: one call at a
+    /// time, each with the newest position, as a Tauri app would do it.
     fn move_part(self, part: u32, x: f32, y: f32) {
         let position = self.positions.with_untracked(|p| p[part as usize]);
-        if self.native {
-            spawn_local(async move {
+        position.set((x, y));
+        if !self.native {
+            self.local(|p| p.apply(Command::Move { part, x, y }));
+            return;
+        }
+        self.unsent_move.set_value(Some((part, x, y)));
+        if self.sending.get_value() {
+            return;
+        }
+        self.sending.set_value(true);
+        spawn_local(async move {
+            while let Some((part, x, y)) = self.unsent_move.try_update_value(Option::take).flatten()
+            {
                 let () = expect(
                     bridge::invoke("core_move", &json!({ "part": part, "x": x, "y": y })).await,
                 );
-                position.set((x, y));
-            });
-        } else {
-            self.local(|p| p.apply(Command::Move { part, x, y }));
-            position.set((x, y));
-        }
+            }
+            self.sending.set_value(false);
+        });
     }
 
     fn set_address(self, address: u8) {
