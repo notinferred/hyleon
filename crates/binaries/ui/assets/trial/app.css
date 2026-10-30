@@ -90,7 +90,7 @@ button {
   background: var(--bg);
   cursor: grab;
 }
-.canvas { transform-origin: 0 0; will-change: transform; pointer-events: none; }
+.canvas { will-change: transform; pointer-events: none; }
 .art svg { display: block; width: 100%; height: auto; }
 .hint { margin: 0; color: var(--muted); font-size: 12px; }
 

@@ -1,6 +1,9 @@
 //! A sheet that pans and zooms. The trial loads a fixed SVG of 5,000+ elements; the pan and zoom
-//! state lives in signals and reaches the page as a CSS transform, so every move goes through
-//! Dioxus's own event path.
+//! state lives in signals, so every move goes through Dioxus's own event path.
+//!
+//! Panning moves the drawn layer, which is cheap. Zooming changes the drawing's width instead of
+//! scaling the layer: a scaled layer is a stretched bitmap and goes blurry, while a resized SVG is
+//! redrawn sharp.
 
 use dioxus::prelude::*;
 
@@ -75,6 +78,7 @@ pub fn Sheet() -> Element {
     let (x, y) = *view.offset.read();
     let zoom = *view.zoom.read();
     let percent = (zoom * 100.0).round();
+    let width = zoom * 100.0;
 
     rsx! {
         div {
@@ -122,7 +126,7 @@ pub fn Sheet() -> Element {
             onmouseleave: move |_| grab.set(None),
             div {
                 class: "canvas",
-                style: "transform: translate({x}px, {y}px) scale({zoom})",
+                style: "transform: translate({x}px, {y}px); width: {width}%",
                 SheetArt {}
             }
         }
