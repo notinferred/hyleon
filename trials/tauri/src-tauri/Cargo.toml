@@ -1,0 +1,20 @@
+[package]
+name = "trial-tauri"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[build-dependencies]
+tauri-build = { version = "=2.7.3", features = [] }
+
+[dependencies]
+bench-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tauri = { version = "=2.12.4", features = [] }
+tauri-plugin-process = "=2.4.0"
+tauri-plugin-updater = "=2.14.0"
+
+[lints]
+workspace = true

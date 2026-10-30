@@ -1,0 +1,6 @@
+{
+  "identifier": "default",
+  "description": "The trial UI may listen for the app's events; its own commands need nothing more.",
+  "windows": ["main"],
+  "permissions": ["core:event:default"]
+}

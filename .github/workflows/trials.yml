@@ -1,9 +1,12 @@
 name: Trials
 
 # Started by hand. The T-02 comparison (docs/STEPS.md): each UI stack runs trials/bench.js on the
-# same generated building and the results are uploaded. Runner numbers are a hint only: they're
-# slow virtual machines. The real numbers come from Dan's Mac. Windows and macOS use GitHub's
-# runners, whose minutes stop at the plan's included amount (D-039).
+# same generated building, and the results are uploaded. Runner numbers are a hint only, since
+# runners are slow virtual machines; the real numbers come from Dan's Mac.
+#   D         Dioxus 0.7, core native in the same process          trials/dioxus
+#   T-native  Leptos 0.8 in Tauri 2, core native behind commands   trials/tauri
+#   T-wasm    the same app, core as wasm inside the UI
+# The Tauri trial is its own workspace: its wry and Dioxus's can't share a lockfile.
 on:
   workflow_dispatch:
     inputs:
@@ -24,7 +27,9 @@ env:
   CARGO_TERM_COLOR: always
   DX_TELEMETRY_ENABLED: "false"
   DX_RELEASE: https://github.com/DioxusLabs/dioxus/releases/download/v0.7.10
-  # One line per results file: the median and 95th percentile of each scenario, in ms.
+  TRUNK_RELEASE: https://github.com/trunk-rs/trunk/releases/download/v0.21.14
+  TAURI_CLI_RELEASE: https://github.com/tauri-apps/tauri/releases/download/tauri-cli-v2.12.3
+  # One line per results file: each scenario's median and 95th percentile, in ms.
   SUMMARY: >-
     "\(.variant) \(.size)\(if .slowMs > 0 then " slow=\(.slowMs)" else "" end):
     open \(.open.ms // "-") |
@@ -47,34 +52,6 @@ jobs:
   check:
     if: ${{ inputs.platform == 'all' || inputs.platform == 'check' }}
     runs-on: blacksmith-2vcpu-ubuntu-2404
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Install the pinned toolchain
-        run: rustup toolchain install
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-        with:
-          workspaces: trials -> target
-      - uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
-        with:
-          tool: cargo-deny@0.20.2
-      - name: Format
-        run: cargo fmt --all --check
-      - name: Licences, advisories, bans and sources (Hyleon's policy)
-        if: ${{ !cancelled() }}
-        run: |
-          cp ../deny.toml deny.toml
-          cargo deny --locked check
-      - name: Tests
-        if: ${{ !cancelled() }}
-        run: cargo test --locked -p bench-core
-      - name: Lints, web build
-        if: ${{ !cancelled() }}
-        run: cargo clippy --locked -p trial-dioxus -p bench-core --target wasm32-unknown-unknown --features trial-dioxus/web -- -D warnings
-
-  web:
-    if: ${{ inputs.platform == 'all' || inputs.platform == 'web' }}
-    runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -82,29 +59,78 @@ jobs:
         run: rustup toolchain install
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
-          workspaces: trials -> target
-      - name: Install dx
+          workspaces: |
+            trials -> target
+            trials/tauri -> target
+      - uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
+        with:
+          tool: cargo-deny@0.20.2
+      - name: Format
+        run: |
+          cargo fmt --all --check
+          (cd tauri && cargo fmt --all --check)
+      - name: Licences, advisories, bans and sources (Hyleon's policy)
+        if: ${{ !cancelled() }}
+        run: |
+          cp ../deny.toml deny.toml && cargo deny --locked check
+          cp ../deny.toml tauri/deny.toml && (cd tauri && cargo deny --locked check)
+      - name: Tests
+        if: ${{ !cancelled() }}
+        run: |
+          cargo test --locked -p bench-core
+          (cd tauri && cargo test --locked -p trial-leptos)
+      - name: Lints, web builds
+        if: ${{ !cancelled() }}
+        run: |
+          cargo clippy --locked -p trial-dioxus -p bench-core --target wasm32-unknown-unknown --features trial-dioxus/web -- -D warnings
+          (cd tauri && cargo clippy --locked -p trial-leptos --target wasm32-unknown-unknown -- -D warnings)
+
+  web:
+    if: ${{ inputs.platform == 'all' || inputs.platform == 'web' }}
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install the pinned toolchain
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: |
+            trials -> target
+            trials/tauri -> target
+      - name: Install dx and Trunk
         run: |
           curl -fsSL -o "$RUNNER_TEMP/dx.tar.gz" "$DX_RELEASE/dx-x86_64-unknown-linux-gnu.tar.gz"
           echo "4363e4ed2a3f1eb7f4d38d2d59aed59ce43271c44c16b425e92c89a64761fbe7  $RUNNER_TEMP/dx.tar.gz" | sha256sum -c -
-          mkdir -p "$RUNNER_TEMP/dx" && tar -xzf "$RUNNER_TEMP/dx.tar.gz" -C "$RUNNER_TEMP/dx"
-          dirname "$(find "$RUNNER_TEMP/dx" -name dx -type f)" >> "$GITHUB_PATH"
-      - name: Build D for the web
-        run: dx build --package trial-dioxus --platform web --release
-      - name: Bench D in Chrome
+          curl -fsSL -o "$RUNNER_TEMP/trunk.tar.gz" "$TRUNK_RELEASE/trunk-x86_64-unknown-linux-gnu.tar.gz"
+          echo "f2b4680cd239693a646a2795e4633c625328d7b2a044fbe749fa3a2fe9e7036b  $RUNNER_TEMP/trunk.tar.gz" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/bin"
+          tar -xzf "$RUNNER_TEMP/dx.tar.gz" -C "$RUNNER_TEMP/bin"
+          tar -xzf "$RUNNER_TEMP/trunk.tar.gz" -C "$RUNNER_TEMP/bin"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - name: Build D and the Leptos UI for the web
         run: |
-          public=$(dirname "$(find target/dx -path '*/web/public/index.html' | head -n 1)")
+          dx build --package trial-dioxus --platform web --release
+          (cd tauri/ui && trunk build --release)
+      - name: Bench in Chrome
+        run: |
+          d_public=$(dirname "$(find target/dx -path '*/web/public/index.html' | head -n 1)")
           chrome=$(command -v google-chrome || command -v chromium)
           mkdir -p results
-          for size in panel building; do
-            python3 -I bench-web.py "$public" 8080 "results/D-web-$size.json" &
-            server=$!
+          bench() {
+            local folder=$1 out=$2 query=$3
+            python3 -I bench-web.py "$folder" 8080 "$out" &
+            local server=$!
             sleep 1
-            "$chrome" --headless=new --window-size=1440,900 --no-first-run --user-data-dir="$RUNNER_TEMP/chrome-$size" "http://127.0.0.1:8080/?size=$size&bench=1" > /dev/null 2>&1 &
-            browser=$!
+            "$chrome" --headless=new --window-size=1440,900 --no-first-run --user-data-dir="$(mktemp -d)" "http://127.0.0.1:8080/?$query" > /dev/null 2>&1 &
+            local browser=$!
             for _ in $(seq 400); do kill -0 "$server" 2>/dev/null || break; sleep 1; done
             kill "$browser" "$server" 2>/dev/null || true
-            jq -r "$SUMMARY" "results/D-web-$size.json"
+            jq -r "$SUMMARY" "$out"
+          }
+          for size in panel building; do
+            bench "$d_public" "results/D-web-$size.json" "size=$size&bench=1"
+            bench tauri/ui/dist "results/T-wasm-web-$size.json" "size=$size&bench=1"
           done
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !cancelled() }}
@@ -116,42 +142,97 @@ jobs:
   macos:
     if: ${{ inputs.platform == 'all' || inputs.platform == 'macos' }}
     runs-on: macos-15
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install the pinned toolchain
         run: rustup toolchain install
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
-          workspaces: trials -> target
-      - name: Install dx
+          workspaces: |
+            trials -> target
+            trials/tauri -> target
+      - name: Install dx, Trunk and the Tauri CLI
         run: |
           curl -fsSL -o "$RUNNER_TEMP/dx.tar.gz" "$DX_RELEASE/dx-aarch64-apple-darwin.tar.gz"
           echo "342c92bc33dca60dadd725ed5e249923f049ae2e1e50b7477f4968d56695b425  $RUNNER_TEMP/dx.tar.gz" | shasum -a 256 -c -
-          mkdir -p "$RUNNER_TEMP/dx" && tar -xzf "$RUNNER_TEMP/dx.tar.gz" -C "$RUNNER_TEMP/dx"
-          dirname "$(find "$RUNNER_TEMP/dx" -name dx -type f)" >> "$GITHUB_PATH"
-      - name: Desktop lints
-        run: cargo clippy --locked -p trial-dioxus --features desktop -- -D warnings
-      - name: Build D
-        run: dx build --package trial-dioxus --platform desktop --release
-      # Each run opens a window, plays the script, writes its results and quits. The slowed run
-      # adds 50 ms to every check, which must show up in the edit times: proof the timing works.
-      - name: Bench D
+          curl -fsSL -o "$RUNNER_TEMP/trunk.tar.gz" "$TRUNK_RELEASE/trunk-aarch64-apple-darwin.tar.gz"
+          echo "764e299dd50d89442a4e96a236349f57961984b701e74d3dbdb39cd1c9f5101e  $RUNNER_TEMP/trunk.tar.gz" | shasum -a 256 -c -
+          curl -fsSL -o "$RUNNER_TEMP/tauri.zip" "$TAURI_CLI_RELEASE/cargo-tauri-aarch64-apple-darwin.zip"
+          echo "35e3b339bfb5f2061023bf5646dc969e5fa53b6fc4347daf467e7f6743692494  $RUNNER_TEMP/tauri.zip" | shasum -a 256 -c -
+          mkdir -p "$RUNNER_TEMP/bin"
+          tar -xzf "$RUNNER_TEMP/dx.tar.gz" -C "$RUNNER_TEMP/bin"
+          tar -xzf "$RUNNER_TEMP/trunk.tar.gz" -C "$RUNNER_TEMP/bin"
+          unzip -q "$RUNNER_TEMP/tauri.zip" -d "$RUNNER_TEMP/bin"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: D
         run: |
+          cargo clippy --locked -p trial-dioxus --features desktop -- -D warnings
+          dx build --package trial-dioxus --platform desktop --release
           app=$(find target/dx -maxdepth 5 -type d -path '*/release/macos/*.app' | head -n 1)
-          exe="$app/Contents/MacOS/trial-dioxus"
-          mkdir -p results
+          echo "D_EXE=$PWD/$app/Contents/MacOS/trial-dioxus" >> "$GITHUB_ENV"
+          mkdir -p results && ditto -c -k --keepParent "$app" results/trial-d-macos.zip
+
+      - name: T, built twice (0.0.1 and 0.0.2) with a throwaway signing key
+        working-directory: trials/tauri
+        run: |
+          (cd ui && trunk build --release)
+          (cd src-tauri && cargo-tauri icon ../app-icon.png > /dev/null)
+          cargo clippy --locked -p trial-tauri -- -D warnings
+          cargo-tauri signer generate --ci -w "$RUNNER_TEMP/trial.key" -p "" > /dev/null
+          export TAURI_SIGNING_PRIVATE_KEY="$(cat "$RUNNER_TEMP/trial.key")" TAURI_SIGNING_PRIVATE_KEY_PASSWORD=""
+          for v in 0.0.1 0.0.2; do
+            jq -n --arg v "$v" --arg k "$(cat "$RUNNER_TEMP/trial.key.pub")" '{version: $v, plugins: {updater: {pubkey: $k}}}' > "$RUNNER_TEMP/conf.json"
+            (cd src-tauri && cargo-tauri build --bundles app --config "$RUNNER_TEMP/conf.json")
+            mkdir -p "$RUNNER_TEMP/$v"
+            cp -R target/release/bundle/macos/. "$RUNNER_TEMP/$v/"
+          done
+          ls -la "$RUNNER_TEMP/0.0.1" "$RUNNER_TEMP/0.0.2"
+          app=$(find "$RUNNER_TEMP/0.0.1" -maxdepth 1 -name '*.app' | head -n 1)
+          exe=$(find "$app/Contents/MacOS" -type f -perm -u+x | head -n 1)
+          echo "T_APP=$app" >> "$GITHUB_ENV"
+          echo "T_EXE=$exe" >> "$GITHUB_ENV"
+
+      - name: T's signed update, 0.0.1 to 0.0.2
+        run: |
+          feed="$RUNNER_TEMP/feed" && mkdir -p "$feed"
+          cp "$(find "$RUNNER_TEMP/0.0.2" -name '*.app.tar.gz' | head -n 1)" "$feed/app.tar.gz"
+          sig=$(cat "$(find "$RUNNER_TEMP/0.0.2" -name '*.app.tar.gz.sig' | head -n 1)")
+          jq -n --arg s "$sig" '{version: "0.0.2", notes: "trial", pub_date: "2026-10-30T00:00:00Z", platforms: {"darwin-aarch64": {signature: $s, url: "http://127.0.0.1:8765/app.tar.gz"}}}' > "$feed/latest.json"
+          python3 -m http.server 8765 --directory "$feed" > /dev/null 2>&1 &
+          try="$RUNNER_TEMP/try" && mkdir -p "$try" && cp -R "$T_APP" "$try/"
+          exe="$try/$(basename "$T_APP")/Contents/MacOS/$(basename "$T_EXE")"
+          marker="$RUNNER_TEMP/self-test.txt"
+          "$exe" --self-test "$marker" --update-feed http://127.0.0.1:8765/latest.json &
+          for _ in $(seq 120); do grep -q 'up to date' "$marker" 2>/dev/null && break; sleep 2; done
+          cat "$marker"
+          sed -n 1p "$marker" | grep -Eq '^0\.0\.1 rendered in [0-9]+ ms$'
+          sed -n 2p "$marker" | grep -Eq '^0\.0\.2 rendered in [0-9]+ ms$'
+          sed -n 3p "$marker" | grep -Eq '^Hyleon 0\.0\.2 is up to date\.$'
+          echo "Ran 0.0.1, installed the signed 0.0.2 and relaunched."
+          ditto -c -k --keepParent "$T_APP" results/trial-t-macos.zip
+          cp -R "$feed" results/t-feed
+
+      # Each run opens a window, plays the script, writes its results and quits. The slowed runs add
+      # 50 ms to every check, which must show in the edit times: proof the timing works.
+      - name: Bench all three
+        run: |
           run() {
-            "$exe" "$@" &
+            "$@" &
             local pid=$!
             for _ in $(seq 400); do kill -0 "$pid" 2>/dev/null || break; sleep 1; done
             kill "$pid" 2>/dev/null || true
           }
-          run --size panel --bench "$PWD/results/D-macos-panel.json"
-          run --size building --bench "$PWD/results/D-macos-building.json"
-          run --size panel --slow 50 --bench "$PWD/results/D-macos-panel-slow50.json"
+          for size in panel building; do
+            run "$D_EXE" --size "$size" --bench "$PWD/results/D-macos-$size.json"
+            run "$T_EXE" --size "$size" --core native --bench "$PWD/results/T-native-macos-$size.json"
+            run "$T_EXE" --size "$size" --core wasm --bench "$PWD/results/T-wasm-macos-$size.json"
+          done
+          run "$D_EXE" --size panel --slow 50 --bench "$PWD/results/D-macos-panel-slow50.json"
+          run "$T_EXE" --size panel --core native --slow 50 --bench "$PWD/results/T-native-macos-panel-slow50.json"
+          run "$T_EXE" --size panel --core wasm --slow 50 --bench "$PWD/results/T-wasm-macos-panel-slow50.json"
           for f in results/*.json; do jq -r "$SUMMARY" "$f"; done
-          ditto -c -k --keepParent "$app" results/trial-d-macos.zip
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !cancelled() }}
         with:
@@ -162,36 +243,95 @@ jobs:
   windows:
     if: ${{ inputs.platform == 'all' || inputs.platform == 'windows' }}
     runs-on: windows-2025
-    timeout-minutes: 40
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install the pinned toolchain
         run: rustup toolchain install
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
-          workspaces: trials -> target
-      - name: Install dx
+          workspaces: |
+            trials -> target
+            trials/tauri -> target
+      - name: Install dx, Trunk and the Tauri CLI
         run: |
           curl -fsSL -o "$RUNNER_TEMP/dx.zip" "$DX_RELEASE/dx-x86_64-pc-windows-msvc.zip"
           echo "45eb4f87b7f86fdba8508ee7e0ef1f9e13cf8f2ffcc6a2d5858d0e8ea7dd1531  $RUNNER_TEMP/dx.zip" | sha256sum -c -
-          unzip -q "$RUNNER_TEMP/dx.zip" -d "$RUNNER_TEMP/dx"
-          dirname "$(find "$RUNNER_TEMP/dx" -name dx.exe -type f)" >> "$GITHUB_PATH"
-      - name: Desktop lints
-        run: cargo clippy --locked -p trial-dioxus --features desktop -- -D warnings
-      - name: Build D
-        run: dx build --package trial-dioxus --platform desktop --release
-      - name: Bench D
+          curl -fsSL -o "$RUNNER_TEMP/trunk.zip" "$TRUNK_RELEASE/trunk-x86_64-pc-windows-msvc.zip"
+          echo "cd6ac15b9daff0365e5695036791ef2ce3c63f61c014f5a8c532363266e4569c  $RUNNER_TEMP/trunk.zip" | sha256sum -c -
+          curl -fsSL -o "$RUNNER_TEMP/tauri.zip" "$TAURI_CLI_RELEASE/cargo-tauri-x86_64-pc-windows-msvc.zip"
+          echo "563cb2aef280c393688cebaff1a9fd4a2f6df4fdb9be2c665ff3c798a4ffe7c2  $RUNNER_TEMP/tauri.zip" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/bin"
+          for z in dx trunk tauri; do unzip -q -o "$RUNNER_TEMP/$z.zip" -d "$RUNNER_TEMP/bin"; done
+          dirname "$(find "$RUNNER_TEMP/bin" -name dx.exe -type f)" >> "$GITHUB_PATH"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: D
         run: |
-          exe=$(find target/dx -path '*/release/windows/app/trial-dioxus.exe' | head -n 1)
+          cargo clippy --locked -p trial-dioxus --features desktop -- -D warnings
+          dx build --package trial-dioxus --platform desktop --release
+          echo "D_EXE=$PWD/$(find target/dx -path '*/release/windows/app/trial-dioxus.exe' | head -n 1)" >> "$GITHUB_ENV"
+
+      - name: T, built twice (0.0.1 and 0.0.2) with a throwaway signing key
+        working-directory: trials/tauri
+        run: |
+          (cd ui && trunk build --release)
+          (cd src-tauri && cargo-tauri icon ../app-icon.png > /dev/null)
+          cargo clippy --locked -p trial-tauri -- -D warnings
+          cargo-tauri signer generate --ci -w "$RUNNER_TEMP/trial.key" -p "" > /dev/null
+          export TAURI_SIGNING_PRIVATE_KEY="$(cat "$RUNNER_TEMP/trial.key")" TAURI_SIGNING_PRIVATE_KEY_PASSWORD=""
+          for v in 0.0.1 0.0.2; do
+            jq -n --arg v "$v" --arg k "$(cat "$RUNNER_TEMP/trial.key.pub")" '{version: $v, plugins: {updater: {pubkey: $k}}}' > "$RUNNER_TEMP/conf.json"
+            (cd src-tauri && cargo-tauri build --bundles nsis --config "$RUNNER_TEMP/conf.json")
+            mkdir -p "$RUNNER_TEMP/$v"
+            cp -R target/release/bundle/nsis/. "$RUNNER_TEMP/$v/"
+          done
+          ls -la "$RUNNER_TEMP/0.0.1" "$RUNNER_TEMP/0.0.2"
+
+      - name: T's signed update, 0.0.1 to 0.0.2
+        shell: pwsh
+        run: |
+          $feed = Join-Path $env:RUNNER_TEMP 'feed'
+          New-Item -ItemType Directory -Force $feed | Out-Null
+          $setup2 = Get-ChildItem (Join-Path $env:RUNNER_TEMP '0.0.2') -Filter '*-setup.exe' | Select-Object -First 1
+          Copy-Item $setup2.FullName (Join-Path $feed 'setup.exe')
+          $sig = Get-Content -Raw "$($setup2.FullName).sig"
+          @{ version = '0.0.2'; notes = 'trial'; pub_date = '2026-10-30T00:00:00Z'; platforms = @{ 'windows-x86_64' = @{ signature = $sig.Trim(); url = 'http://127.0.0.1:8765/setup.exe' } } } | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $feed 'latest.json')
+          Start-Process python -ArgumentList '-m', 'http.server', '8765', '--directory', $feed -WindowStyle Hidden
+          $setup1 = Get-ChildItem (Join-Path $env:RUNNER_TEMP '0.0.1') -Filter '*-setup.exe' | Select-Object -First 1
+          (Start-Process -FilePath $setup1.FullName -ArgumentList '/S' -PassThru).WaitForExit()
+          Start-Sleep -Seconds 3
+          Get-Process | Where-Object { $_.Path -like "*Hyleon Trial T*" } | Stop-Process -ErrorAction SilentlyContinue
+          # NSIS installs per user under the product name; the app is the .exe that isn't the uninstaller.
+          $exe = Get-ChildItem (Join-Path $env:LOCALAPPDATA 'Hyleon Trial T') -Filter '*.exe' -ErrorAction SilentlyContinue | Where-Object { $_.Name -notlike 'uninstall*' } | Select-Object -First 1
+          if (-not $exe) { throw 'The installed app was not found.' }
+          "T_EXE=$($exe.FullName)" | Add-Content $env:GITHUB_ENV
+          $marker = Join-Path $env:RUNNER_TEMP 'self-test.txt'
+          Start-Process -FilePath $exe.FullName -ArgumentList '--self-test', $marker, '--update-feed', 'http://127.0.0.1:8765/latest.json'
+          $deadline = (Get-Date).AddMinutes(4)
+          while ((Get-Date) -lt $deadline -and -not ((Test-Path $marker) -and (Select-String -Path $marker -Pattern 'up to date' -Quiet))) { Start-Sleep -Seconds 2 }
+          if (-not (Test-Path $marker)) { throw 'The app never wrote its self-test file.' }
+          $lines = @(Get-Content $marker)
+          $lines
+          $expected = '^0\.0\.1 rendered in \d+ ms$', '^0\.0\.2 rendered in \d+ ms$', '^Hyleon 0\.0\.2 is up to date\.$'
+          if ($lines.Count -ne 3) { throw "Expected 3 lines, got $($lines.Count)." }
+          for ($i = 0; $i -lt 3; $i++) { if ($lines[$i] -notmatch $expected[$i]) { throw "Line $($i + 1) is wrong." } }
+          'Installed 0.0.1, installed the signed 0.0.2 and relaunched.'
+
+      - name: Bench all three
+        run: |
           mkdir -p results
           run() {
-            "$exe" "$@" &
+            "$@" &
             local pid=$!
             for _ in $(seq 400); do kill -0 "$pid" 2>/dev/null || break; sleep 1; done
             kill "$pid" 2>/dev/null || true
           }
-          run --size panel --bench "$(cygpath -w "$PWD/results/D-windows-panel.json")"
-          run --size building --bench "$(cygpath -w "$PWD/results/D-windows-building.json")"
+          for size in panel building; do
+            run "$D_EXE" --size "$size" --bench "$(cygpath -w "$PWD/results/D-windows-$size.json")"
+            run "$T_EXE" --size "$size" --core native --bench "$(cygpath -w "$PWD/results/T-native-windows-$size.json")"
+            run "$T_EXE" --size "$size" --core wasm --bench "$(cygpath -w "$PWD/results/T-wasm-windows-$size.json")"
+          done
           for f in results/*.json; do jq -r "$SUMMARY" "$f"; done
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !cancelled() }}

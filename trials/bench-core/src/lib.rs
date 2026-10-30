@@ -148,6 +148,32 @@ pub enum Command {
     SetAddress { part: u32, address: u8 },
 }
 
+/// What the diagram draws: every part and wire, without the rest of the model. It's what crosses
+/// the bridge when the core runs outside the UI.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Scene {
+    pub pages: u16,
+    pub width: f32,
+    pub height: f32,
+    pub parts: Vec<ScenePart>,
+    pub wires: Vec<SceneWire>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ScenePart {
+    pub id: u32,
+    pub tag: String,
+    pub x: f32,
+    pub y: f32,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+pub struct SceneWire {
+    pub id: u32,
+    pub from: u32,
+    pub to: u32,
+}
+
 /// One line of the parts-and-connections list.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Row {
@@ -454,6 +480,40 @@ impl Project {
             }
         }
         (rows, total)
+    }
+
+    /// The whole-building diagram's size: a tile per page, in a square grid.
+    pub fn diagram_size(&self) -> (f32, f32) {
+        let tiles = (self.pages as f32).sqrt().ceil();
+        (tiles * TILE_WIDTH, tiles * TILE_HEIGHT)
+    }
+
+    pub fn scene(&self) -> Scene {
+        let (width, height) = self.diagram_size();
+        Scene {
+            pages: self.pages,
+            width,
+            height,
+            parts: self
+                .parts
+                .iter()
+                .map(|p| ScenePart {
+                    id: p.id,
+                    tag: p.tag.clone(),
+                    x: p.x,
+                    y: p.y,
+                })
+                .collect(),
+            wires: self
+                .connections
+                .iter()
+                .map(|c| SceneWire {
+                    id: c.id,
+                    from: c.from,
+                    to: c.to,
+                })
+                .collect(),
+        }
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {

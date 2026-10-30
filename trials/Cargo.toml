@@ -4,6 +4,9 @@
 [workspace]
 resolver = "3"
 members = ["bench-core", "dioxus"]
+# Tauri 2.12 needs wry 0.57 and Dioxus 0.7 needs wry 0.53, which pin different webkit2gtk versions,
+# and Cargo allows one per lockfile. So the Tauri trial is its own workspace.
+exclude = ["tauri"]
 
 [workspace.package]
 version = "0.0.0"

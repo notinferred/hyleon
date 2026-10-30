@@ -5,3 +5,7 @@ node_modules/
 /trials/target/
 /trials/tauri/ui/dist/
 /trials/deny.toml
+/trials/tauri/src-tauri/gen/
+/trials/tauri/src-tauri/icons/
+/trials/tauri/target/
+/trials/tauri/deny.toml
