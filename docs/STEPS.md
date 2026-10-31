@@ -30,12 +30,15 @@ The next five tasks, in detail. Finished tasks move to [steps/README.md](steps/R
     - `checks`: rules, findings with sources
     - `packs/modbus-drive-bus` and `packs/site-basics`, each with its test projects
     - `hyleon check <folder>`
+    - the pack spec, open to any author (D-045): published in [formats/pack.md](formats/pack.md) with a version and a schema; every rule carries a source and at least one test project
+    - `hyleon pack check <folder>`, which validates anyone's pack against the spec
   - **Verify:**
     - on the sample, a seeded duplicate address and a missing termination each produce exactly one error citing its source, and fixing them clears them
     - a rule that nests three macros is refused at load, with its file, line and column
     - a rule whose dry run fails against the test projects is refused
     - a collection over the cap yields an `info` finding instead of hanging
     - a malformed pack is refused with its line and column
+    - a rule without a source, or without a test, is refused with its file and line
 - [ ] **T-05: Sheet pipeline**
   - **Needs:** T-04.
   - **Build:**
@@ -48,3 +51,13 @@ The next five tasks, in detail. Finished tasks move to [steps/README.md](steps/R
     - the PDF passes veraPDF as PDF/A-2u (D-008)
     - rendering an unchanged model again gives the same SVG hash
     - the title block shows the project, sheet, revision and "PRELIMINARY, NOT FOR CONSTRUCTION"
+- [ ] **T-18: The app on Leptos + Tauri**
+  - **Needs:** T-01. It starts from the trial in `trials/tauri` ([T-02](steps/T-02.md)).
+  - **Build:**
+    - `crates/binaries/ui` becomes the app: a Leptos UI in a Tauri shell, with the core running inside the UI as wasm (D-043)
+    - the native side does menus, files and, later, signed updates
+    - the layering table gains the app's crates
+  - **Verify:**
+    - the gate passes, including the Leptos licences (D-044)
+    - the app builds and runs on macOS (locally) and Windows (in CI), and as a web build
+    - every control works by keyboard, and the accessibility tree names the sheet and its findings, as in T-02

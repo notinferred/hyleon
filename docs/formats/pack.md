@@ -1,6 +1,6 @@
 # Pack format, version 1
 
-**Status: planned.**
+**Status: planned.** The format is open: anyone may research and write packs to it (D-045). T-04 publishes it with a version, a schema and a validator.
 
 A pack is the framework for one kind of job: the questions to answer first, the limits that apply, the checks a design must pass and the documents it must produce. Packs are TOML files (D-005) in `packs/`, and anyone can read them.
 

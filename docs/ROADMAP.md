@@ -29,6 +29,8 @@ The order of content follows D-021: every industry is supported, starting with t
 
 **Scope:**
 - **Packs:** `site-basics`, `motor-branch-circuit`, `modbus-drive-bus` and `pump-discharge-spool`, all sharing one pump ([formats/pack.md](formats/pack.md)).
+- **An open pack spec (D-045):** published and versioned, a source and a test on every rule, and a validator anyone can run on their own pack (T-04).
+- **The app:** a Leptos UI in a Tauri shell, with the core inside the UI as wasm (D-043; T-18).
 - **The engine:**
   - questions with conditions
   - sources, and acknowledgements at issue, with a reason required for errors (D-022)
@@ -135,6 +137,10 @@ The order of content follows D-021: every industry is supported, starting with t
 - **Power-study export:** one-line data to SKM, ETAP and EasyPower.
 - **Parameter sheets and commissioning checklists** from device settings, with firmware versions logged (D-032).
 - **Prices and budgets:** catalog prices with availability and a last-checked date, quantities, and a budget estimate. Real lengths arrive with phase 5 (D-034).
+- **Energy and running cost (D-045):** yearly energy, cost and carbon per part, system and site, from catalog ratings joined to the person's run hours, load profile, tariff and location.
+  - Every figure is an estimate that shows its sources.
+  - Demand charges are included, not just a flat price per kWh.
+  - Open price data comes first: the US Utility Rate Database, EIA, Eurostat ([research](research/2026-10-31-scope.md)).
 - **Imports and tag sync:** network inventories and controller or SCADA tag lists in, and tags back out (D-034).
 - **Other packs:** distribution boards, piping spools (materials, supports, cut lists).
 - **On site.** Record work on a tablet: photos, measured values, markups.
@@ -205,6 +211,7 @@ The order of content follows D-021: every industry is supported, starting with t
 
 **Scope:**
 - **A pack library and marketplace.** Community and company packs, and manufacturers publishing device packs. Packs are signed.
+- **Packs for other kinds of work.** Through the open spec, other authors research boundaries beyond physical design (D-045).
 - **Delegating packs.** A KiCad project, or a 3D CAD model via DXF or DEXPI, is linked as evidence, while that tool does its own checks.
 - **Import.** A picture, a sketch or a PDF becomes model elements, every one marked AI-inferred until a person confirms it.
 

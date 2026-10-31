@@ -6,6 +6,8 @@ What Hyleon does, in detail. Why it exists and what must stay true are in [TRUTH
 
 This is everything Hyleon really needs (D-036). Everything else attaches to it.
 
+Hyleon connects researched boundaries to the work (TRUTHS.md, D-045). Packs carry the research, the model carries the work, and checks join the two, whether a person or an AI did the work. The pack format is open, so any kind of work can be researched into packs; Hyleon's own packs start with physical design.
+
 1. **One model.** Everything is one of four things:
    - a **Place** (site, area, room, enclosure)
    - a **Part** (a real component from the catalog, or a custom one)
@@ -151,6 +153,10 @@ Format: [formats/catalog.md](formats/catalog.md); D-031.
 ## Device settings
 
 Each device's parameters, addresses and firmware follow its catalog schema. They're checked across devices, and exported as parameter sheets and commissioning checklists (D-032).
+
+## Energy and running cost (phase 4)
+
+From each part's researched ratings and the person's run hours, load profile, tariff and location, Hyleon estimates yearly energy, cost and carbon per part, system and site (D-045). Every figure shows its sources and stays an estimate. Some energy facts are also design checks: a pump far from its best efficiency point is flagged.
 
 ## Printing and branding
 
