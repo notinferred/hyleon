@@ -1,6 +1,6 @@
 # Hyleon: working rules
 
-Hyleon (working name) is a test suite for physical design. Why it exists and what must stay true are in [TRUTHS.md](TRUTHS.md). This file says how to work here. It's the only instruction file; [AGENTS.md](AGENTS.md) points to it.
+Hyleon (working name) connects researched boundaries to the work, starting with physical design. Why it exists and what must stay true are in [TRUTHS.md](TRUTHS.md). This file says how to work here. It's the only instruction file; [AGENTS.md](AGENTS.md) points to it.
 
 ## Read first
 

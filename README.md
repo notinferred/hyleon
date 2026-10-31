@@ -1,6 +1,6 @@
 # Hyleon
 
-A test suite for physical design (working name). Start with [TRUTHS.md](TRUTHS.md).
+Hyleon (working name) connects researched boundaries to the work, starting with physical design. Start with [TRUTHS.md](TRUTHS.md).
 
 **Status: foundations.** This repository holds the product's truths, research, specification and roadmap, and an empty Rust workspace whose guardrails run in CI. A trial chose the app's UI stack, Leptos in a Tauri shell (D-043); the trial lives in `trials/`. There is nothing to install or run yet.
 

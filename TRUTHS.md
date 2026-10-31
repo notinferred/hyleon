@@ -12,7 +12,7 @@ Professionals now design with AI, but they still answer for what gets built. A w
 
 ## In one sentence
 
-Hyleon is a test suite for physical design: it asks what must be known, shows where a design leaves its limits and checks every change, so people and their AI can trust a design before anything is built.
+Hyleon connects researched boundaries to the work: it asks what must be known, shows where the work leaves its limits and checks every change, so people and their AI can trust it before anything is built. It starts with physical design.
 
 ## In one paragraph
 
